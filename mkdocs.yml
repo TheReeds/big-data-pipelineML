@@ -1,0 +1,59 @@
+site_name: "Big Data Pipeline — Unidad 2"
+site_description: "Documentación técnica del pipeline Open-Meteo → Kafka → Spark → PostgreSQL → ML"
+site_author: "george159357852@gmail.com"
+repo_url: https://github.com/GITHUB_USER/REPO_NAME
+repo_name: GITHUB_USER/REPO_NAME
+edit_uri: ""
+
+theme:
+  name: material
+  language: es
+  palette:
+    - scheme: default
+      primary: deep purple
+      accent: cyan
+      toggle:
+        icon: material/brightness-7
+        name: Modo oscuro
+    - scheme: slate
+      primary: deep purple
+      accent: cyan
+      toggle:
+        icon: material/brightness-4
+        name: Modo claro
+  features:
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.sections
+    - navigation.top
+    - content.code.copy
+    - content.code.annotate
+    - search.highlight
+
+plugins:
+  - search
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.superfences
+  - pymdownx.details
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - admonition
+  - tables
+  - toc:
+      permalink: true
+
+nav:
+  - Inicio: index.md
+  - S6 — Kafka: s6_kafka.md
+  - S7 — Structured Streaming: s7_streaming.md
+  - S8 — Observabilidad: s8_observabilidad.md
+  - S9 — MLlib: s9_mllib.md
+  - S10 — Series de Tiempo: s10_series_tiempo.md
+  - S11 — Tuning: s11_tuning.md
+  - Arquitectura: arquitectura.md

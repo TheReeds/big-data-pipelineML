@@ -1,0 +1,139 @@
+services:
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    user: "0"
+    ports:
+      - "9092:9092"
+      - "9093:9093"
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_LOG_RETENTION_HOURS: 1
+      KAFKA_LOG_SEGMENT_BYTES: 1073741824
+      CLUSTER_ID: 6tEDss3rTcK2D3AH4M9xyA==
+    tmpfs:
+      - /var/lib/kafka/data
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+    restart: "no"
+    healthcheck:
+      test: ["CMD", "kafka-topics", "--bootstrap-server", "localhost:9092", "--list"]
+      interval: 5s
+      timeout: 10s
+      retries: 20
+
+  postgres:
+    image: postgres:16
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: weather_dm
+      POSTGRES_USER: spark
+      POSTGRES_PASSWORD: spark123
+    tmpfs:
+      - /var/lib/postgresql/data
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    restart: "no"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U spark -d weather_dm"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_INSTALL_PLUGINS: ""
+    volumes:
+      - ./grafana/datasources:/etc/grafana/provisioning/datasources
+      - ./grafana/dashboards:/etc/grafana/provisioning/dashboards
+    depends_on:
+      postgres:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+    restart: "no"
+
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+    restart: "no"
+
+  spark-notebook:
+    build: .
+    ports:
+      - "8888:8888"
+      - "4040:4040"
+    environment:
+      - JUPYTER_ENABLE_LAB=yes
+      - GRANT_SUDO=yes
+      - PYSPARK_SUBMIT_ARGS=--conf spark.ui.host=0.0.0.0 --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.0,org.postgresql:postgresql:42.7.1 pyspark-shell
+    volumes:
+      - ./notebooks:/home/jovyan/work
+      - ./warehouse:/home/jovyan/warehouse
+      - ./checkpoint:/home/jovyan/checkpoint
+      - /var/run/docker.sock:/var/run/docker.sock
+    group_add:
+      - "958"   # host docker group GID — permite acceder al socket
+    tmpfs:
+      - /tmp
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+    restart: "no"
+    depends_on:
+      kafka:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+
+  superset:
+    build:
+      context: .
+      dockerfile: Dockerfile.superset
+    ports:
+      - "8088:8088"
+    environment:
+      SUPERSET_SECRET_KEY: "superset_secret_key_dev"
+      SUPERSET_SQLALCHEMY_DATABASE_URI: "sqlite:////app/superset_home/superset.db"
+    volumes:
+      - superset_data:/app/superset_home
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+    restart: "no"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  superset_data:

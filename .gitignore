@@ -1,0 +1,10 @@
+site/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+checkpoint/
+warehouse/
+notebooks/spark-warehouse/
+notebooks/models/
+*.db
+.env
