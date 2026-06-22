@@ -1,3 +1,27 @@
+# S6 — Apache Kafka
+
+!!! abstract "Objetivo S6"
+    Implementar un pipeline Kafka completo: tópico, contrato de evento, producer en background
+    y consumer de verificación. Se usa **KRaft mode** (sin ZooKeeper) con un solo broker.
+
+```mermaid
+flowchart LR
+    A["🌤️ Open-Meteo API"] -->|"GET cada 10 s"| B["kafka-python
+Producer Thread"]
+    B -->|"JSON event"| C["Kafka
+weather_topic
+1 partición"]
+    C -->|"KafkaConsumer
+verificación"| D["Consumer
+(S6 verify)"]
+    C -->|"ReadStream"| E["Spark Streaming
+(S7 →)"]
+
+    style C fill:#f59e0b,color:#fff
+```
+
+---
+
 ## 2. Kafka — Topic y Contrato de Evento (S6)
 
 
@@ -242,9 +266,4 @@ else:
       value = {
         "time": "2026-06-22T00:00",
         "temperature_2m": 20.1,
-        "relative_humidity_2m": 79,
-        "wind_speed_10m": 5.1,
-        "pressure_msl": 1014.4,
-        "weather_code": 3,
-        "event_id": 3,
-    ... (26 líneas omitidas)
+    ... (31 líneas omitidas)

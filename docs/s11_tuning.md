@@ -1,3 +1,56 @@
+# S11 — Tuning y Experimentación Distribuida
+
+!!! abstract "Objetivo S11"
+    Optimizar hiperparámetros con `TrainValidationSplit` (equivalente distribuido de GridSearchCV).
+    Se evalúan 6 configuraciones de LR y 6 de GBT → tabla de 12 experimentos.
+
+```mermaid
+flowchart TB
+    TRAIN["Training Set
+597 registros"] --> TVS
+
+    subgraph TVS["TrainValidationSplit
+trainRatio=0.8"]
+        subgraph LR_GRID["LR Grid — 6 configs"]
+            LR1["regParam=0.01
+elasticNet=0.0"]
+            LR2["regParam=0.01
+elasticNet=0.5"]
+            LR3["regParam=0.1 ..."]
+        end
+        subgraph GBT_GRID["GBT Grid — 6 configs"]
+            G1["maxDepth=3
+maxIter=50"]
+            G2["maxDepth=5
+maxIter=50"]
+            G3["maxDepth=7 ..."]
+        end
+    end
+
+    TVS -->|"best LR"| BEST_LR["LR campeón
+regParam=0.01 · elasticNet=0.0
+val RMSE=2.648°C"]
+    TVS -->|"best GBT"| BEST_GBT["GBT campeón
+maxDepth=3 · maxIter=50
+val RMSE=1.738°C"]
+
+    BEST_GBT -->|"test set"| FINAL["Test RMSE=1.558°C
+R²=0.924
+47.4% mejor que LR"]
+    FINAL -->|"save"| MODEL["FINAL_MODEL_PATH
+weather_temp_model_final"]
+
+    style BEST_GBT fill:#10b981,color:#fff
+    style FINAL fill:#ec4899,color:#fff
+```
+
+!!! success "Hallazgo S11"
+    Con `day_of_year` como feature, `maxDepth=7` ya no sobreajusta (antes era el peor).
+    Features más ricas permiten árboles más profundos sin overfitting.
+    **Champion: GBT maxDepth=3, test RMSE=1.558°C, R²=0.924.**
+
+---
+
 ---
 ## 15. S11 — Tuning y Experimentación Distribuida
 

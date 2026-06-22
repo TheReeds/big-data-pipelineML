@@ -1,3 +1,36 @@
+# S7 — Structured Streaming
+
+!!! abstract "Objetivo S7"
+    Procesar el stream de Kafka con Spark Structured Streaming aplicando watermark
+    y ventanas de tiempo. Comparar triggers y medir latencia/throughput.
+
+```mermaid
+flowchart LR
+    K["Kafka
+weather_topic"] -->|"ReadStream"| P["parse JSON
+Schema tipado"]
+    P -->|"withWatermark
+10 min"| W["window
+5 min tumbling"]
+    W -->|"avg/min/max"| AGG["Agregaciones"]
+    AGG -->|"foreachBatch"| PG[("PostgreSQL
+weather_windows")]
+    AGG -->|"memory sink"| MEM["spark.sql()"]
+
+    style W fill:#8b5cf6,color:#fff
+    style PG fill:#10b981,color:#fff
+```
+
+!!! info "Parámetros clave"
+    | Parámetro | Valor | Motivo |
+    |-----------|-------|--------|
+    | Watermark | 10 min | Tolera retrasos de la API externa |
+    | Ventana | 5 min | Granularidad adecuada para temperatura |
+    | Trigger | 10 s | Latencia baja sin overhead excesivo |
+    | Output mode | `update` | Solo emite ventanas modificadas |
+
+---
+
 ## 7. Monitoreo en vivo
 
 Polling de la tabla `weather_windows` cada 15 s durante ~2 min.  
@@ -81,10 +114,7 @@ print("Monitoreo completado")
     |2026-06-22 04:00:00|2026-06-22 04:05:00|1     |20.1    |79.0        |5.1     |
     |2026-06-22 04:00:00|2026-06-22 04:05:00|2     |20.1    |79.0        |5.1     |
     |2026-06-22 04:00:00|2026-06-22 04:05:00|3     |20.1    |79.0        |5.1     |
-    +-------------------+-------------------+------+--------+------------+--------+
-
-
-    Monitoreo completado
+    ... (4 líneas omitidas)
 
 
 ```python

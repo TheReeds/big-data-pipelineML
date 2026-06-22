@@ -1,3 +1,59 @@
+# S9 — ML Distribuido con MLlib
+
+!!! abstract "Objetivo S9"
+    Entrenar modelos de regresión con MLlib para predecir temperatura.
+    Dataset: 741 registros históricos de Open-Meteo Archive (30 días).
+    Comparar LinearRegression vs GBTRegressor con y sin lag features.
+
+```mermaid
+flowchart TB
+    HIST["Open-Meteo Archive
+30 días · 741 registros"] -->|"feature engineering"| FE
+
+    subgraph FE["Feature Engineering"]
+        F1["hour_sin / hour_cos
+cyclic encoding"]
+        F2["day_of_year
+estacionalidad"]
+        F3["temp_lag1/2/3
+lag features (batch only)"]
+    end
+
+    FE --> SPLIT["Train/Test split
+randomSplit 80/20
+597 / 144"]
+
+    SPLIT --> LR["LinearRegression
+StandardScaler
+RMSE=2.97 · R²=0.73"]
+    SPLIT --> GBT["GBTRegressor
+base 7 features
+RMSE=1.48 · R²=0.93"]
+    SPLIT --> LAG["GBTRegressor
++ lags 10 features
+RMSE=0.92 · R²=0.97"]
+
+    GBT -->|"save model"| SAVED["MODEL_PATH
+/work/models/weather_temp_model"]
+    SAVED -->|"S10 →"| INF["Streaming
+Inference"]
+
+    style GBT fill:#ec4899,color:#fff
+    style LAG fill:#6366f1,color:#fff
+    style SAVED fill:#10b981,color:#fff
+```
+
+!!! success "Resultados"
+    | Modelo | RMSE | R² | RMSE/σ | Uso |
+    |--------|------|-----|--------|-----|
+    | LinearRegression | 2.965°C | 0.726 | 0.54 | Baseline |
+    | GBTRegressor base | 1.479°C | 0.932 | 0.27 | **Streaming** |
+    | GBT + lag features | **0.922°C** | **0.974** | **0.17** | Batch/histórico |
+
+    RMSE/σ < 0.6 → modelo aceptable para producción.
+
+---
+
 ---
 ## 13. S9 — ML Distribuido con MLlib: Regresión de Temperatura
 

@@ -1,3 +1,41 @@
+# S8 — Observabilidad
+
+!!! abstract "Objetivo S8"
+    Exponer métricas del pipeline vía Prometheus, visualizarlas en Grafana
+    y estimar costos de operación en producción.
+
+```mermaid
+flowchart LR
+    SPARK["Spark
+Streaming Query"] -->|"recentProgress
+cada batch"| EXP["Prometheus
+Exporter :8001"]
+    EXP -->|"scrape 15 s"| PROM["Prometheus
+:9090"]
+    PROM -->|"datasource"| GRAF["Grafana
+:3000"]
+    PG[("PostgreSQL")] -->|"SQL datasource"| GRAF
+
+    subgraph metricas["Métricas expuestas"]
+        M1["spark_throughput_rows_per_sec"]
+        M2["spark_latency_trigger_ms"]
+        M3["spark_state_rows"]
+        M4["spark_watermark_lag_s"]
+    end
+
+    EXP --> metricas
+
+    style PROM fill:#e65100,color:#fff
+    style GRAF fill:#f57c00,color:#fff
+```
+
+!!! warning "Nota sobre tmpfs"
+    El docker-compose monta `/tmp` como `tmpfs` sin permisos de ejecución.
+    Esto impide que Snappy cargue su librería nativa (`.so`).
+    **Solución:** usar `spark.sql.parquet.compression.codec = uncompressed` al guardar modelos.
+
+---
+
 ```python
 def collect_metrics(exp_name, progress_list):
     """Extrae metricas estructuradas de recentProgress."""
@@ -435,73 +473,3 @@ Escala 4 (global):       usar Confluent Cloud + Databricks Structured Streaming
 | Producer | at-least-once | `acks=all`, `retries=3` → posibles duplicados en retry |
 | Spark sin checkpoint | at-least-once | Reinicio puede reprocesar eventos |
 | Spark con checkpoint | exactly-once | Requiere sink idempotente (S3, Delta Lake) |
-
-
-## 12. Verificación Rápida del Pipeline
-
-Re-ejecuta esta celda cuando quieras ver el estado actual de todos los sinks.
-
-
-```python
-print("="*60)
-print("VERIFICACIÓN DEL PIPELINE")
-print("="*60)
-
-# 1. Estado de las queries activas
-active = spark.streams.active
-print(f"\nQueries activas: {len(active)}")
-for q in active:
-    p = q.lastProgress
-    if p:
-        print(f"  · {q.name}: {q.isActive} | "
-              f"input={p.get('numInputRows',0)} filas | "
-              f"latency={p.get('triggerExecutionInMs',0):.0f} ms")
-    else:
-        print(f"  · {q.name}: {q.isActive} (sin progreso aún)")
-
-# 2. Datos en memoria (Spark SQL)
-print(f"\n--- Memoria (spark.sql) ---")
-try:
-    df = spark.sql("SELECT window.start, window.end, events, avg_temp, avg_humidity "
-                   "FROM weather_windows ORDER BY window.start")
-    print(f"Filas: {df.count()}")
-    df.show(truncate=False)
-except Exception as e:
-    print(f"  (sin datos aún — {e})")
-
-# 3. Datos en PostgreSQL
-print(f"--- PostgreSQL (weather_windows) ---")
-try:
-    pg_df = spark.read.jdbc(PG_URL, "weather_windows", properties=PG_PROPS)
-    print(f"Filas: {pg_df.count()}")
-    pg_df.orderBy("window_start").show(truncate=False)
-except Exception as e:
-    print(f"  Error: {e}")
-
-# 4. Archivos Parquet en warehouse
-import subprocess
-result = subprocess.run(
-    ["find", "/home/jovyan/warehouse/weather_windows", "-name", "*.parquet"],
-    capture_output=True, text=True, timeout=5
-)
-parquet_files = [f for f in result.stdout.split('\n') if f.strip()]
-print(f"--- Parquet (warehouse) ---")
-print(f"  Archivos: {len(parquet_files)}")
-if parquet_files:
-    parquet_size = subprocess.run(
-        ["du", "-sh", "/home/jovyan/warehouse/weather_windows"],
-        capture_output=True, text=True, timeout=5
-    )
-    print(f"  Tamaño total: {parquet_size.stdout.strip()}")
-
-# 5. Estado del producer
-try:
-    print(f"\nProducer vivo: {producer_thread.is_alive()}")
-    if _producer_log:
-        for line in _producer_log[-3:]:
-            print(f"  {line}")
-except NameError:
-    print(f"\nProducer: no iniciado aún")
-
-print("\n" + "="*60)
-```

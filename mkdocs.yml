@@ -1,6 +1,6 @@
 site_name: "Big Data Pipeline — Unidad 2"
-site_description: "Documentación técnica del pipeline Open-Meteo → Kafka → Spark → PostgreSQL → ML"
-site_author: "george159357852@gmail.com"
+site_description: "Pipeline Open-Meteo → Kafka → Spark Streaming → PostgreSQL → MLlib"
+site_author: "TheReeds"
 repo_url: https://github.com/TheReeds/big-data-pipelineML
 repo_name: TheReeds/big-data-pipelineML
 edit_uri: ""
@@ -8,6 +8,8 @@ edit_uri: ""
 theme:
   name: material
   language: es
+  logo: assets/logo.svg
+  favicon: assets/logo.svg
   palette:
     - scheme: default
       primary: deep purple
@@ -26,9 +28,11 @@ theme:
     - navigation.tabs.sticky
     - navigation.sections
     - navigation.top
+    - navigation.footer
     - content.code.copy
     - content.code.annotate
     - search.highlight
+    - search.suggest
 
 plugins:
   - search
@@ -36,24 +40,40 @@ plugins:
 markdown_extensions:
   - pymdownx.highlight:
       anchor_linenums: true
-  - pymdownx.superfences
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
   - pymdownx.details
   - pymdownx.tabbed:
       alternate_style: true
   - pymdownx.emoji:
       emoji_index: !!python/name:material.extensions.emoji.twemoji
       emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.inlinehilite
   - admonition
   - tables
+  - attr_list
+  - md_in_html
   - toc:
       permalink: true
 
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/TheReeds/big-data-pipelineML
+
 nav:
   - Inicio: index.md
-  - S6 — Kafka: s6_kafka.md
-  - S7 — Structured Streaming: s7_streaming.md
-  - S8 — Observabilidad: s8_observabilidad.md
-  - S9 — MLlib: s9_mllib.md
-  - S10 — Series de Tiempo: s10_series_tiempo.md
-  - S11 — Tuning: s11_tuning.md
   - Arquitectura: arquitectura.md
+  - Pipeline:
+    - S6 — Kafka: s6_kafka.md
+    - S7 — Structured Streaming: s7_streaming.md
+    - S8 — Observabilidad: s8_observabilidad.md
+  - Machine Learning:
+    - S9 — MLlib: s9_mllib.md
+    - S10 — Series de Tiempo: s10_series_tiempo.md
+    - S11 — Tuning: s11_tuning.md

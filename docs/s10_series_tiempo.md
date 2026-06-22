@@ -1,3 +1,44 @@
+# S10 — Series de Tiempo e Inferencia Streaming
+
+!!! abstract "Objetivo S10"
+    Analizar patrones temporales en la serie de temperatura (ciclo diario, autocorrelación)
+    y aplicar inferencia en tiempo real: el stream de Kafka pasa por el modelo GBT guardado.
+
+```mermaid
+flowchart LR
+    subgraph ts["Análisis Temporal"]
+        HIST["Serie histórica
+741 puntos"] --> HOUR["Promedio por hora
+peak 16:00 = 26.4°C
+cold 06:00 = 17.4°C"]
+        HIST --> AUTO["Autocorrelación
+lag-24h = 0.739 ≥ 0.7
+✅ ciclo diario confirmado"]
+    end
+
+    subgraph inf["Inferencia Streaming"]
+        KAFKA["Kafka
+weather_topic"] -->|"ReadStream"| FEAT["Feature
+Engineering
+hour_sin/cos · day_of_year"]
+        FEAT -->|"transform"| MODEL["GBT Model
+(cargado)"]
+        MODEL -->|"foreachBatch"| PG[("temp_predictions
+PostgreSQL")]
+        PG --> GRAF["Grafana
+Real vs Predicho"]
+    end
+
+    style MODEL fill:#ec4899,color:#fff
+    style PG fill:#10b981,color:#fff
+```
+
+!!! info "Autocorrelación lag-24h"
+    Un valor ≥ 0.7 confirma que la temperatura de hoy a las 14:00 es un buen predictor
+    de la temperatura de mañana a las 14:00 — ciclo circadiano estadísticamente significativo.
+
+---
+
 ---
 ## 14. S10 — Series de Tiempo e Inferencia en Streaming
 

@@ -1,66 +1,91 @@
-# Pipeline: Open-Meteo → Kafka → Spark Streaming → PostgreSQL → ML
+# Big Data Pipeline — Unidad 2
 
-Pipeline integrado con PostgreSQL sink, Prometheus metrics, Grafana y MLlib.  
-Cubre los criterios **S6** a **S11**:
+Pipeline de ingesta, procesamiento en streaming y ML distribuido sobre datos meteorológicos reales.
 
-| Sesión | Objetivo | Evidencia en este notebook |
-|--------|----------|---------------------------|
-| S6 | Kafka: tópicos, productor, consumidor, contrato de evento | §2 contrato, §4 producer, §8 consumer verify |
-| S7 | Structured Streaming: ventanas, watermark, latencia/throughput | §5 stream, §6 watermark, §9 benchmarking |
-| S8 | Observabilidad (Grafana+Prometheus), costos, escalado | §10 métricas, §11 alertas, §12 costos |
-| S9 | ML distribuido: regresión con MLlib (LR + GBT + lags) | §13 dataset, modelos, tabla comparativa |
-| S10 | Series de tiempo e inferencia en streaming | §14 patrones horarios, inferencia Kafka→modelo |
-| S11 | Tuning y experimentación distribuida (TrainValidationSplit) | §15 grid search, tabla de 12 experimentos |
+---
 
+## Flujo general
 
-## 1. Imports y configuración
+```mermaid
+flowchart LR
+    A["🌤️ Open-Meteo API\ncada 10 s"] -->|JSON| B["📨 Kafka\nweather_topic\nKRaft mode"]
+    B -->|ReadStream| C["⚡ Spark\nStructured Streaming\nwatermark 10 min"]
+    C -->|foreachBatch| D[("🐘 PostgreSQL\nweather_windows")]
+    C -->|writeStream| E["📦 Parquet\nwarehouse"]
+    D --> F["📊 Grafana\n+ Prometheus"]
+    D -->|datos históricos| G["🤖 MLlib\nS9 · S10 · S11"]
+    G -->|GBT model| H["🔮 Inferencia\nStreaming"]
+    H --> D
 
-
-```python
-import requests, json, time, threading, subprocess
-from datetime import datetime
-from kafka import KafkaProducer, KafkaAdminClient, KafkaConsumer, TopicPartition
-from kafka.admin import NewTopic
-from kafka.errors import TopicAlreadyExistsError
-import pandas as pd
-from pyspark.sql import SparkSession
-from pyspark.sql.functions import (
-    from_json, col, window, avg,
-    min as spark_min, max as spark_max, count,
-    to_timestamp, round as spark_round
-)
-from pyspark.sql.types import (
-    StructType, StructField, StringType, DoubleType, IntegerType
-)
-from prometheus_client import start_http_server, Gauge
-
-BOOTSTRAP_SERVERS = "kafka:9092"
-TOPIC_NAME        = "weather_topic"
-PG_URL            = "jdbc:postgresql://postgres:5432/weather_dm"
-PG_PROPS          = {"user": "spark", "password": "spark123", "driver": "org.postgresql.Driver"}
-NYC_LAT, NYC_LON  = 40.7128, -74.0060
-API_URL           = "https://api.open-meteo.com/v1/forecast"
-API_PARAMS = {
-    "latitude": NYC_LAT, "longitude": NYC_LON,
-    "current": "temperature_2m,relative_humidity_2m,wind_speed_10m,pressure_msl,weather_code",
-    "timezone": "America/New_York"
-}
-print("Imports OK")
+    style A fill:#0ea5e9,color:#fff
+    style B fill:#f59e0b,color:#fff
+    style C fill:#8b5cf6,color:#fff
+    style D fill:#10b981,color:#fff
+    style G fill:#ec4899,color:#fff
+    style H fill:#6366f1,color:#fff
 ```
 
+---
 
-??? output "Salida"
-    Imports OK
+## Sesiones cubiertas
 
+| # | Sesión | Tecnología | Resultado |
+|---|--------|-----------|-----------|
+| S6 | Kafka — tópico, productor, consumidor | KRaft · kafka-python | Contrato de evento JSON validado |
+| S7 | Structured Streaming — ventanas, watermark | Spark 3.5 | Latencia p95 < 200 ms |
+| S8 | Observabilidad — métricas, alertas, costos | Prometheus · Grafana | 2 dashboards operativos |
+| S9 | ML distribuido — regresión con MLlib | VectorAssembler · GBT | R² = 0.974 con lag features |
+| S10 | Series de tiempo + inferencia streaming | PipelineModel.load | MAE stream ≈ 0.33°C |
+| S11 | Tuning distribuido — TrainValidationSplit | ParamGridBuilder | 12 experimentos, GBT campeón |
 
-## Resultados Clave
+---
+
+## Resultados de modelos
+
+```mermaid
+xychart-beta
+    title "RMSE por modelo (°C) — menor es mejor"
+    x-axis ["LinearRegression", "GBT Tuned S11", "GBT base", "GBT+lags"]
+    y-axis "RMSE (°C)" 0 --> 3.5
+    bar [2.965, 1.558, 1.479, 0.922]
+```
 
 | Modelo | Features | RMSE | MAE | R² | RMSE/σ |
-|--------|----------|------|-----|-----|--------|
+|--------|----------|-----:|----:|---:|-------:|
 | LinearRegression | base (7) | 2.965°C | 2.435°C | 0.726 | 0.538 |
+| GBT Tuned (S11) | base (7) | 1.558°C | — | 0.924 | 0.283 |
 | GBTRegressor base | base (7) | 1.479°C | 1.029°C | 0.932 | 0.269 |
-| GBTRegressor+lags | lag (10) | 0.922°C | 0.587°C | 0.974 | 0.167 |
-| **GBT Tuned (S11)** | base (7) | **1.558°C** | — | **0.924** | 0.283 |
+| **GBT + lag features** | lag (10) | **0.922°C** | **0.587°C** | **0.974** | **0.167** |
 
-> **GBT+lags** es el mejor modelo batch (RMSE/σ = 0.17, mejora 37.7% vs GBT base).
-> **GBT Tuned** es el modelo de producción seleccionado en S11 (streaming-compatible).
+!!! success "Modelo campeón de producción"
+    **GBT base** (7 features, sin lags) se usa en **streaming** — compatible con datos en tiempo real sin estado.
+    **GBT + lags** es el mejor modelo batch con RMSE/σ = 0.17 (37.7% mejor que GBT base).
+
+---
+
+## Stack tecnológico
+
+=== "Ingesta"
+    - **Apache Kafka 7.5** — KRaft mode, sin ZooKeeper
+    - **Open-Meteo API** — datos meteorológicos gratuitos cada 10 s
+    - **kafka-python** — producer daemon thread
+
+=== "Procesamiento"
+    - **Apache Spark 3.5** Structured Streaming
+    - Watermark 10 min + ventanas tumbling 5 min
+    - Sinks: PostgreSQL · Parquet · Memory
+
+=== "Machine Learning"
+    - **MLlib** — LinearRegression, GBTRegressor, Pipeline
+    - **TrainValidationSplit** — grid search distribuido
+    - Features: cyclic hour encoding, day_of_year, lag features
+
+=== "Observabilidad"
+    - **Prometheus** — scrape métricas Spark cada 15 s
+    - **Grafana** — dashboard infra + dashboard ML results
+    - **Apache Superset** — BI analítico sobre PostgreSQL
+
+=== "Infraestructura"
+    - Docker Compose — 5 servicios (Kafka, Spark, PG, Grafana, Superset)
+    - Jupyter PySpark notebook integrado
+    - GitHub Actions → MkDocs → GitHub Pages
