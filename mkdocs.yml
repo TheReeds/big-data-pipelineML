@@ -1,6 +1,7 @@
 site_name: "Big Data Pipeline — Unidad 2"
 site_description: "Pipeline Open-Meteo → Kafka → Spark Streaming → PostgreSQL → MLlib"
 site_author: "TheReeds"
+site_url: https://thereeds.github.io/big-data-pipelineML/
 repo_url: https://github.com/TheReeds/big-data-pipelineML
 repo_name: TheReeds/big-data-pipelineML
 edit_uri: ""
