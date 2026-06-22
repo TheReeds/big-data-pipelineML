@@ -1,8 +1,8 @@
 site_name: "Big Data Pipeline — Unidad 2"
 site_description: "Documentación técnica del pipeline Open-Meteo → Kafka → Spark → PostgreSQL → ML"
 site_author: "george159357852@gmail.com"
-repo_url: https://github.com/GITHUB_USER/REPO_NAME
-repo_name: GITHUB_USER/REPO_NAME
+repo_url: https://github.com/TheReeds/big-data-pipelineML
+repo_name: TheReeds/big-data-pipelineML
 edit_uri: ""
 
 theme:
