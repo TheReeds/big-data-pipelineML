@@ -55,20 +55,22 @@ Inference"]
 ---
 
 ---
-## 13. S9 — ML Distribuido con MLlib: Regresión de Temperatura
+## 13. S9–S11 — ML Distribuido con MLlib (marco CRISP-DM)
 
-**Objetivo:** entrenar un modelo de regresión en Spark MLlib que prediga  
-`temperature_2m` a partir de variables meteorológicas.
+**Objetivo:** entrenar un modelo de regresión de temperatura en Spark MLlib,
+aplicarlo sobre el stream de Kafka en tiempo real (S10) y optimizarlo con
+búsqueda distribuida de hiperparámetros (S11).
 
-| Paso | Descripción |
-|------|-------------|
-| Dataset | 30 días de datos horarios reales de NYC vía Open-Meteo historical API |
-| Features base | `relative_humidity_2m`, `wind_speed_10m`, `pressure_msl`, `weather_code`, `hour_sin`, `hour_cos`, **`day_of_year`** |
-| Features enhanced | base + `temp_lag1`, `temp_lag2`, `temp_lag3` (modelo batch, no streaming) |
-| Target | `temperature_2m` |
-| Split | 80/20 aleatorio (seed=42) |
-| Modelos | `LinearRegression` + `GBTRegressor` baseline y con lags |
-| Métricas | RMSE, MAE, R² |
+Este bloque sigue la metodología **CRISP-DM** (Cross-Industry Standard Process for Data Mining):
+
+| Fase | Descripción | Sección |
+|------|-------------|---------|
+| **1. Business Understanding** | Problema, objetivo de negocio, criterios de éxito | §13.1 |
+| **2. Data Understanding** | EDA: distribuciones, correlaciones, patrones temporales | §13.2 |
+| **3. Data Preparation** | Feature engineering: cyclic encoding, day_of_year, lag features | §13.3 |
+| **4. Modeling** | LR baseline → GBT → GBT+lags → Tuning S11 | §13.4 – §15 |
+| **5. Evaluation** | RMSE, MAE, R², RMSE/σ — tabla comparativa de 4 modelos | §13.4, §15 |
+| **6. Deployment** | Modelo serializado → inferencia en streaming Kafka (S10) | §14, §15 |
 
 
 ```python

@@ -84,7 +84,7 @@ print(f"  value:     {json.dumps(example_event, indent=10)}")
 
 
 ??? output "Salida"
-    Topic 'weather_topic' ya existe
+    Topic 'weather_topic' creado
     Topics disponibles: ['weather_topic']
 
     === Ejemplo de mensaje (contrato de evento) ===
