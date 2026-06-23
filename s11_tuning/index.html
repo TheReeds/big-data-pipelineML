@@ -933,13 +933,13 @@ Features más ricas permiten árboles más profundos sin overfitting.
 <p>=== S11 — Tuning LinearRegression ===
 Evaluando 6 configuraciones LR (train/val split)...
           modelo  regParam  elasticNetParam maxDepth maxIter  val_RMSE
-LinearRegression      1.00              0.0        -       -    2.7747
-LinearRegression      0.10              0.5        -       -    2.7767
-LinearRegression      0.10              0.0        -       -    2.7867
-LinearRegression      0.01              0.5        -       -    2.7973
-LinearRegression      0.01              0.0        -       -    2.7987
-LinearRegression      1.00              0.5        -       -    2.9351</p>
-<p>Mejor LR — regParam=1.0, elasticNetParam=0.0, val_RMSE=2.7747</p>
+LinearRegression      0.01              0.0        -       -    3.1291
+LinearRegression      0.01              0.5        -       -    3.1310
+LinearRegression      0.10              0.0        -       -    3.1368
+LinearRegression      0.10              0.5        -       -    3.1607
+LinearRegression      1.00              0.0        -       -    3.2615
+LinearRegression      1.00              0.5        -       -    3.5967</p>
+<p>Mejor LR — regParam=0.01, elasticNetParam=0.0, val_RMSE=3.1291</p>
 </details>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nb">print</span><span class="p">(</span><span class="s2">&quot;=== S11 — Tuning GBTRegressor ===&quot;</span><span class="p">)</span>
 </span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
@@ -988,89 +988,43 @@ LinearRegression      1.00              0.5        -       -    2.9351</p>
 <p>=== S11 — Tuning GBTRegressor ===
 Evaluando 6 configuraciones GBT...
       modelo regParam elasticNetParam  maxDepth  maxIter  val_RMSE
-GBTRegressor        -               -         3       50    1.5774
-GBTRegressor        -               -         5       50    1.6797
-GBTRegressor        -               -         5       30    1.7383
-GBTRegressor        -               -         3       30    1.7857
-GBTRegressor        -               -         7       50    2.3047
-GBTRegressor        -               -         7       30    2.3238</p>
-<p>Mejor GBT — maxDepth=3, maxIter=50, val_RMSE=1.5774</p>
+GBTRegressor        -               -         3       50    1.4713
+GBTRegressor        -               -         5       50    1.4857
+GBTRegressor        -               -         5       30    1.6055
+GBTRegressor        -               -         3       30    1.7024
+GBTRegressor        -               -         7       50    1.7788
+GBTRegressor        -               -         7       30    1.7941</p>
+<p>Mejor GBT — maxDepth=3, maxIter=50, val_RMSE=1.4713</p>
 </details>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># Tabla unificada de todos los experimentos (S9 baseline + S11 tuning)</span>
-</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="nb">print</span><span class="p">(</span><span class="s2">&quot;=== S11 — Tabla Completa de Experimentos ===&quot;</span><span class="p">)</span>
-</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>
-</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="n">df_all_experiments</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">df_tune_lr</span><span class="p">,</span> <span class="n">df_tune_gbt</span><span class="p">],</span> <span class="n">ignore_index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="n">df_all_experiments</span> <span class="o">=</span> <span class="n">df_all_experiments</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="s2">&quot;val_RMSE&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-</span><span id="__span-2-6"><a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="n">df_all_experiments</span><span class="o">.</span><span class="n">index</span> <span class="o">+=</span> <span class="mi">1</span>
-</span><span id="__span-2-7"><a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="nb">print</span><span class="p">(</span><span class="n">df_all_experiments</span><span class="o">.</span><span class="n">to_string</span><span class="p">())</span>
-</span><span id="__span-2-8"><a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>
-</span><span id="__span-2-9"><a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="c1"># Evaluar el mejor modelo de cada familia en test set (holdout real)</span>
-</span><span id="__span-2-10"><a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span class="n">best_lr_final</span>  <span class="o">=</span> <span class="n">tvs_model_lr</span><span class="o">.</span><span class="n">bestModel</span>
-</span><span id="__span-2-11"><a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a><span class="n">best_gbt_final</span> <span class="o">=</span> <span class="n">tvs_model_gbt</span><span class="o">.</span><span class="n">bestModel</span>
-</span><span id="__span-2-12"><a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>
-</span><span id="__span-2-13"><a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a><span class="n">preds_lr_final</span>  <span class="o">=</span> <span class="n">best_lr_final</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">test_df</span><span class="p">)</span>
-</span><span id="__span-2-14"><a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a><span class="n">preds_gbt_final</span> <span class="o">=</span> <span class="n">best_gbt_final</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">test_df</span><span class="p">)</span>
-</span><span id="__span-2-15"><a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a>
-</span><span id="__span-2-16"><a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a><span class="n">rmse_lr_f</span>  <span class="o">=</span> <span class="n">evaluator_rmse</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">preds_lr_final</span><span class="p">)</span>
-</span><span id="__span-2-17"><a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a><span class="n">rmse_gbt_f</span> <span class="o">=</span> <span class="n">evaluator_rmse</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">preds_gbt_final</span><span class="p">)</span>
-</span><span id="__span-2-18"><a id="__codelineno-2-18" name="__codelineno-2-18" href="#__codelineno-2-18"></a><span class="n">r2_lr_f</span>    <span class="o">=</span> <span class="n">evaluator_r2</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">preds_lr_final</span><span class="p">)</span>
-</span><span id="__span-2-19"><a id="__codelineno-2-19" name="__codelineno-2-19" href="#__codelineno-2-19"></a><span class="n">r2_gbt_f</span>   <span class="o">=</span> <span class="n">evaluator_r2</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">preds_gbt_final</span><span class="p">)</span>
-</span><span id="__span-2-20"><a id="__codelineno-2-20" name="__codelineno-2-20" href="#__codelineno-2-20"></a>
-</span><span id="__span-2-21"><a id="__codelineno-2-21" name="__codelineno-2-21" href="#__codelineno-2-21"></a><span class="nb">print</span><span class="p">()</span>
-</span><span id="__span-2-22"><a id="__codelineno-2-22" name="__codelineno-2-22" href="#__codelineno-2-22"></a><span class="nb">print</span><span class="p">(</span><span class="s2">&quot;=== S11 — Evaluación en TEST SET (modelo óptimo de cada familia) ===&quot;</span><span class="p">)</span>
-</span><span id="__span-2-23"><a id="__codelineno-2-23" name="__codelineno-2-23" href="#__codelineno-2-23"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  LinearRegression (best): RMSE=</span><span class="si">{</span><span class="n">rmse_lr_f</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2"> °C | R²=</span><span class="si">{</span><span class="n">r2_lr_f</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-</span><span id="__span-2-24"><a id="__codelineno-2-24" name="__codelineno-2-24" href="#__codelineno-2-24"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  GBTRegressor     (best): RMSE=</span><span class="si">{</span><span class="n">rmse_gbt_f</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2"> °C | R²=</span><span class="si">{</span><span class="n">r2_gbt_f</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-</span><span id="__span-2-25"><a id="__codelineno-2-25" name="__codelineno-2-25" href="#__codelineno-2-25"></a><span class="nb">print</span><span class="p">()</span>
-</span><span id="__span-2-26"><a id="__codelineno-2-26" name="__codelineno-2-26" href="#__codelineno-2-26"></a>
-</span><span id="__span-2-27"><a id="__codelineno-2-27" name="__codelineno-2-27" href="#__codelineno-2-27"></a><span class="c1"># Observación sobre profundidad de árboles</span>
-</span><span id="__span-2-28"><a id="__codelineno-2-28" name="__codelineno-2-28" href="#__codelineno-2-28"></a><span class="n">gbt_depth_summary</span> <span class="o">=</span> <span class="p">(</span>
-</span><span id="__span-2-29"><a id="__codelineno-2-29" name="__codelineno-2-29" href="#__codelineno-2-29"></a>    <span class="n">df_tune_gbt</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s2">&quot;maxDepth&quot;</span><span class="p">)[</span><span class="s2">&quot;val_RMSE&quot;</span><span class="p">]</span>
-</span><span id="__span-2-30"><a id="__codelineno-2-30" name="__codelineno-2-30" href="#__codelineno-2-30"></a>    <span class="o">.</span><span class="n">mean</span><span class="p">()</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span><span class="o">.</span><span class="n">sort_index</span><span class="p">()</span>
-</span><span id="__span-2-31"><a id="__codelineno-2-31" name="__codelineno-2-31" href="#__codelineno-2-31"></a><span class="p">)</span>
-</span><span id="__span-2-32"><a id="__codelineno-2-32" name="__codelineno-2-32" href="#__codelineno-2-32"></a><span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Efecto de maxDepth (val_RMSE promedio):&quot;</span><span class="p">)</span>
-</span><span id="__span-2-33"><a id="__codelineno-2-33" name="__codelineno-2-33" href="#__codelineno-2-33"></a><span class="k">for</span> <span class="n">d</span><span class="p">,</span> <span class="n">rmse</span> <span class="ow">in</span> <span class="n">gbt_depth_summary</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-</span><span id="__span-2-34"><a id="__codelineno-2-34" name="__codelineno-2-34" href="#__codelineno-2-34"></a>    <span class="n">note</span> <span class="o">=</span> <span class="s2">&quot; ← mejor generalización&quot;</span> <span class="k">if</span> <span class="n">d</span> <span class="o">==</span> <span class="n">gbt_depth_summary</span><span class="o">.</span><span class="n">idxmin</span><span class="p">()</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
-</span><span id="__span-2-35"><a id="__codelineno-2-35" name="__codelineno-2-35" href="#__codelineno-2-35"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  maxDepth=</span><span class="si">{</span><span class="n">d</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">rmse</span><span class="si">}{</span><span class="n">note</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-</span><span id="__span-2-36"><a id="__codelineno-2-36" name="__codelineno-2-36" href="#__codelineno-2-36"></a><span class="nb">print</span><span class="p">(</span><span class="s2">&quot;  (más profundidad → más overfitting con 720 muestras)&quot;</span><span class="p">)</span>
-</span><span id="__span-2-37"><a id="__codelineno-2-37" name="__codelineno-2-37" href="#__codelineno-2-37"></a>
-</span><span id="__span-2-38"><a id="__codelineno-2-38" name="__codelineno-2-38" href="#__codelineno-2-38"></a><span class="c1"># Siempre guardar el mejor GBT (pipeline sin StandardScaler — serialización limpia)</span>
-</span><span id="__span-2-39"><a id="__codelineno-2-39" name="__codelineno-2-39" href="#__codelineno-2-39"></a><span class="n">FINAL_MODEL_PATH</span> <span class="o">=</span> <span class="s2">&quot;/home/jovyan/work/models/weather_temp_model_final&quot;</span>
-</span><span id="__span-2-40"><a id="__codelineno-2-40" name="__codelineno-2-40" href="#__codelineno-2-40"></a><span class="n">spark</span><span class="o">.</span><span class="n">conf</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;spark.sql.parquet.compression.codec&quot;</span><span class="p">,</span> <span class="s2">&quot;uncompressed&quot;</span><span class="p">)</span>
-</span><span id="__span-2-41"><a id="__codelineno-2-41" name="__codelineno-2-41" href="#__codelineno-2-41"></a><span class="n">best_gbt_final</span><span class="o">.</span><span class="n">write</span><span class="p">()</span><span class="o">.</span><span class="n">overwrite</span><span class="p">()</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">FINAL_MODEL_PATH</span><span class="p">)</span>
-</span><span id="__span-2-42"><a id="__codelineno-2-42" name="__codelineno-2-42" href="#__codelineno-2-42"></a><span class="n">spark</span><span class="o">.</span><span class="n">conf</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;spark.sql.parquet.compression.codec&quot;</span><span class="p">,</span> <span class="s2">&quot;snappy&quot;</span><span class="p">)</span>
-</span><span id="__span-2-43"><a id="__codelineno-2-43" name="__codelineno-2-43" href="#__codelineno-2-43"></a>
-</span><span id="__span-2-44"><a id="__codelineno-2-44" name="__codelineno-2-44" href="#__codelineno-2-44"></a><span class="n">champ_rmse</span> <span class="o">=</span> <span class="n">rmse_gbt_f</span>
-</span><span id="__span-2-45"><a id="__codelineno-2-45" name="__codelineno-2-45" href="#__codelineno-2-45"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Modelo campeón (GBTRegressor, maxDepth=3) guardado en </span><span class="si">{</span><span class="n">FINAL_MODEL_PATH</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-</span><span id="__span-2-46"><a id="__codelineno-2-46" name="__codelineno-2-46" href="#__codelineno-2-46"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;RMSE test: </span><span class="si">{</span><span class="n">champ_rmse</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2"> °C | R²: </span><span class="si">{</span><span class="n">r2_gbt_f</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-</span><span id="__span-2-47"><a id="__codelineno-2-47" name="__codelineno-2-47" href="#__codelineno-2-47"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Mejora sobre LR baseline: </span><span class="si">{</span><span class="p">((</span><span class="n">rmse_lr_f</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">rmse_gbt_f</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">rmse_lr_f</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">100</span><span class="p">)</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">% menos RMSE&quot;</span><span class="p">)</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># Tabla unificada de todos los experimentos (S9 baseline + S11 tuning)print(&quot;=== S11 — Tabla Completa de Experimentos ===&quot;)df_all_experiments = pd.concat([df_tune_lr, df_tune_gbt], ignore_index=True)df_all_experiments = df_all_experiments.sort_values(&quot;val_RMSE&quot;).reset_index(drop=True)df_all_experiments.index += 1print(df_all_experiments.to_string())# Evaluar el mejor modelo de cada familia en test set (holdout real)best_lr_final  = tvs_model_lr.bestModelbest_gbt_final = tvs_model_gbt.bestModelpreds_lr_final  = best_lr_final.transform(test_df)preds_gbt_final = best_gbt_final.transform(test_df)rmse_lr_f  = evaluator_rmse.evaluate(preds_lr_final)rmse_gbt_f = evaluator_rmse.evaluate(preds_gbt_final)r2_lr_f    = evaluator_r2.evaluate(preds_lr_final)r2_gbt_f   = evaluator_r2.evaluate(preds_gbt_final)print()print(&quot;=== S11 — Evaluación en TEST SET (modelo óptimo de cada familia) ===&quot;)print(f&quot;  LinearRegression (best): RMSE={rmse_lr_f:.3f} °C | R²={r2_lr_f:.4f}&quot;)print(f&quot;  GBTRegressor     (best): RMSE={rmse_gbt_f:.3f} °C | R²={r2_gbt_f:.4f}&quot;)print()# Observación sobre profundidad de árbolesgbt_depth_summary = (    df_tune_gbt.groupby(&quot;maxDepth&quot;)[&quot;val_RMSE&quot;]    .mean().round(4).sort_index())print(&quot;Efecto de maxDepth (val_RMSE promedio):&quot;)for d, rmse in gbt_depth_summary.items():    note = &quot; ← mejor generalización&quot; if d == gbt_depth_summary.idxmin() else &quot;&quot;    print(f&quot;  maxDepth={d}: {rmse}{note}&quot;)print(&quot;  (más profundidad → más overfitting con 720 muestras)&quot;)# Siempre guardar el mejor GBT (pipeline sin StandardScaler — serialización limpia)FINAL_MODEL_PATH = &quot;/home/jovyan/work/models/weather_temp_model_final&quot;spark.conf.set(&quot;spark.sql.parquet.compression.codec&quot;, &quot;uncompressed&quot;)best_gbt_final.write().overwrite().save(FINAL_MODEL_PATH)spark.conf.set(&quot;spark.sql.parquet.compression.codec&quot;, &quot;snappy&quot;)champ_rmse = rmse_gbt_fprint(f&quot;\nModelo campeón (GBTRegressor, maxDepth=3) guardado en {FINAL_MODEL_PATH}&quot;)print(f&quot;RMSE test: {champ_rmse:.3f} °C | R²: {r2_gbt_f:.4f}&quot;)print(f&quot;Mejora sobre LR baseline: {((rmse_lr_f - rmse_gbt_f) / rmse_lr_f * 100):.1f}% menos RMSE&quot;)# ── Persistir S11 champion en PostgreSQL ─────────────────────────────────────import subprocess_env = {**__import__(&quot;os&quot;).environ, &quot;PGPASSWORD&quot;: &quot;spark123&quot;}_psql = [&quot;psql&quot;,&quot;-h&quot;,&quot;postgres&quot;,&quot;-U&quot;,&quot;spark&quot;,&quot;-d&quot;,&quot;weather_dm&quot;]# Insertar tuned GBT championsigma_val = float(df_hist[&quot;temperature_2m&quot;].std())ins = (    f&quot;INSERT INTO model_metrics(model_name,features,rmse,mae,r2,rmse_sigma) &quot;    f&quot;VALUES(&#39;GBT_tuned_S11&#39;,&#39;base(7)&#39;,{rmse_gbt_f:.4f},{rmse_gbt_f:.4f},{r2_gbt_f:.4f},{rmse_gbt_f/sigma_val:.4f});&quot;)r = subprocess.run(_psql + [&quot;-c&quot;, ins], capture_output=True, text=True, env=_env)if r.returncode != 0:    print(f&quot;  ERROR insertando champion: {r.stderr}&quot;)else:    print(&quot;S11 champion persistido en model_metrics&quot;)# Insertar tuned LR championins_lr = (    f&quot;INSERT INTO model_metrics(model_name,features,rmse,mae,r2,rmse_sigma) &quot;    f&quot;VALUES(&#39;LR_tuned_S11&#39;,&#39;base(7)&#39;,{rmse_lr_f:.4f},{rmse_lr_f:.4f},{r2_lr_f:.4f},{rmse_lr_f/sigma_val:.4f});&quot;)r2 = subprocess.run(_psql + [&quot;-c&quot;, ins_lr], capture_output=True, text=True, env=_env)if r2.returncode != 0:    print(f&quot;  ERROR insertando LR tuned: {r2.stderr}&quot;)# ── Crear y poblar tabla s11_experiments ─────────────────────────────────────r3 = subprocess.run(_psql + [&quot;-c&quot;, &quot;&quot;&quot;CREATE TABLE IF NOT EXISTS s11_experiments (    id              SERIAL PRIMARY KEY,    modelo          VARCHAR(50),    regParam        DOUBLE PRECISION,    elasticNetParam DOUBLE PRECISION,    maxDepth        INTEGER,    maxIter         INTEGER,    val_RMSE        DOUBLE PRECISION);&quot;&quot;&quot;], capture_output=True, text=True, env=_env)if r3.returncode != 0 and &quot;already exists&quot; not in r3.stderr:    print(f&quot;  ERROR creando s11_experiments: {r3.stderr}&quot;)# Truncar para que cada ejecucion sea limpiasubprocess.run(_psql + [&quot;-c&quot;, &quot;TRUNCATE s11_experiments;&quot;], capture_output=True, text=True, env=_env)for _, row in df_all_experiments.iterrows():    rp = row.get(&#39;regParam&#39;, &#39;NULL&#39;)    ep = row.get(&#39;elasticNetParam&#39;, &#39;NULL&#39;)    md = row.get(&#39;maxDepth&#39;, &#39;NULL&#39;)    mi = row.get(&#39;maxIter&#39;, &#39;NULL&#39;)    vr = row.get(&#39;val_RMSE&#39;, 0)    ins_exp = (        f&quot;INSERT INTO s11_experiments(modelo,regParam,elasticNetParam,maxDepth,maxIter,val_RMSE) &quot;        f&quot;VALUES(&#39;{row[&#39;modelo&#39;]}&#39;,{rp},{ep},{md},{mi},{vr});&quot;    )    subprocess.run(_psql + [&quot;-c&quot;, ins_exp], capture_output=True, text=True, env=_env)print(&quot;S11 experimentos persistidos en s11_experiments&quot;)result = subprocess.run(    _psql + [&quot;-c&quot;,&quot;SELECT modelo,maxDepth,maxIter,ROUND(val_RMSE::numeric,4) AS val_rmse FROM s11_experiments ORDER BY val_RMSE ASC LIMIT 5;&quot;],    capture_output=True, text=True, env=_env)print(result.stdout)</span>
 </span></code></pre></div>
 <details class="output">
 <summary>Salida</summary>
 <p>=== S11 — Tabla Completa de Experimentos ===
               modelo regParam elasticNetParam maxDepth maxIter  val_RMSE
-1       GBTRegressor        -               -        3      50    1.5774
-2       GBTRegressor        -               -        5      50    1.6797
-3       GBTRegressor        -               -        5      30    1.7383
-4       GBTRegressor        -               -        3      30    1.7857
-5       GBTRegressor        -               -        7      50    2.3047
-6       GBTRegressor        -               -        7      30    2.3238
-7   LinearRegression      1.0             0.0        -       -    2.7747
-8   LinearRegression      0.1             0.5        -       -    2.7767
-9   LinearRegression      0.1             0.0        -       -    2.7867
-10  LinearRegression     0.01             0.5        -       -    2.7973
-11  LinearRegression     0.01             0.0        -       -    2.7987
-12  LinearRegression      1.0             0.5        -       -    2.9351</p>
+1       GBTRegressor        -               -        3      50    1.4713
+2       GBTRegressor        -               -        5      50    1.4857
+3       GBTRegressor        -               -        5      30    1.6055
+4       GBTRegressor        -               -        3      30    1.7024
+5       GBTRegressor        -               -        7      50    1.7788
+6       GBTRegressor        -               -        7      30    1.7941
+7   LinearRegression     0.01             0.0        -       -    3.1291
+8   LinearRegression     0.01             0.5        -       -    3.1310
+9   LinearRegression      0.1             0.0        -       -    3.1368
+10  LinearRegression      0.1             0.5        -       -    3.1607
+11  LinearRegression      1.0             0.0        -       -    3.2615
+12  LinearRegression      1.0             0.5        -       -    3.5967</p>
 <p>=== S11 — Evaluación en TEST SET (modelo óptimo de cada familia) ===
-  LinearRegression (best): RMSE=3.093 °C | R²=0.7021
-  GBTRegressor     (best): RMSE=1.558 °C | R²=0.9244</p>
+  LinearRegression (best): RMSE=2.770 °C | R²=0.7343
+  GBTRegressor     (best): RMSE=1.652 °C | R²=0.9056</p>
 <p>Efecto de maxDepth (val_RMSE promedio):
-  maxDepth=3: 1.6816 ← mejor generalización
-  maxDepth=5: 1.709
-  maxDepth=7: 2.3142
+  maxDepth=3: 1.5869
+  maxDepth=5: 1.5456 ← mejor generalización
+  maxDepth=7: 1.7864
   (más profundidad → más overfitting con 720 muestras)</p>
 <p>Modelo campeón (GBTRegressor, maxDepth=3) guardado en /home/jovyan/work/models/weather_temp_model_final
-RMSE test: 1.558 °C | R²: 0.9244
-Mejora sobre LR baseline: 49.6% menos RMSE</p>
+RMSE test: 1.652 °C | R²: 0.9056
+Mejora sobre LR baseline: 40.4% menos RMSE</p>
 </details>
 
 

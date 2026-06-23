@@ -981,35 +981,35 @@ Muestra el log del producer y las ventanas procesadas en el mismo output.</p>
 <summary>Salida</summary>
 <p>=== Monitoreando 3 snapshots (cada 10s) ===</p>
 <p>--- Snapshot #1 (t=10s) ---
-  producer : 3 eventos | ultimo: [#  3] offset=  85 | temp=20.1°C | wind=5.1 km/h | at=2026-06-22T04:01:56
+  producer : 4 eventos | ultimo: [#  4] offset=   3 | temp=20.2°C | wind=17.1 km/h | at=2026-06-23T14:35:04
   stream   : Waiting for next trigger
-  latencia : 299 ms  |  throughput: 0 rps
+  latencia : 813 ms  |  throughput: 1.23 rps
 +-------------------+-------------------+------+--------+------------+--------+
 |start              |end                |events|avg_temp|avg_humidity|avg_wind|
 +-------------------+-------------------+------+--------+------------+--------+
-|2026-06-22 04:00:00|2026-06-22 04:05:00|1     |20.1    |79.0        |5.1     |
+|2026-06-23 14:35:00|2026-06-23 14:40:00|1     |20.2    |90.0        |17.1    |
+|2026-06-23 14:30:00|2026-06-23 14:35:00|1     |20.2    |90.0        |17.1    |
 +-------------------+-------------------+------+--------+------------+--------+</p>
 <p>--- Snapshot #2 (t=20s) ---
-  producer : 4 eventos | ultimo: [#  4] offset=  86 | temp=20.1°C | wind=5.1 km/h | at=2026-06-22T04:02:07
+  producer : 5 eventos | ultimo: [#  5] offset=   4 | temp=20.2°C | wind=17.1 km/h | at=2026-06-23T14:35:15
   stream   : Waiting for next trigger
-  latencia : 164 ms  |  throughput: 0 rps
+  latencia : 203 ms  |  throughput: 0 rps
 +-------------------+-------------------+------+--------+------------+--------+
 |start              |end                |events|avg_temp|avg_humidity|avg_wind|
 +-------------------+-------------------+------+--------+------------+--------+
-|2026-06-22 04:00:00|2026-06-22 04:05:00|1     |20.1    |79.0        |5.1     |
-|2026-06-22 04:00:00|2026-06-22 04:05:00|2     |20.1    |79.0        |5.1     |
+|2026-06-23 14:35:00|2026-06-23 14:40:00|1     |20.2    |90.0        |17.1    |
+|2026-06-23 14:30:00|2026-06-23 14:35:00|1     |20.2    |90.0        |17.1    |
 +-------------------+-------------------+------+--------+------------+--------+</p>
 <p>--- Snapshot #3 (t=30s) ---
-  producer : 5 eventos | ultimo: [#  5] offset=  87 | temp=20.1°C | wind=5.1 km/h | at=2026-06-22T04:02:18
+  producer : 6 eventos | ultimo: [#  6] offset=   5 | temp=20.2°C | wind=17.1 km/h | at=2026-06-23T14:35:26
   stream   : Waiting for next trigger
-  latencia : 149 ms  |  throughput: 0 rps
+  latencia : 177 ms  |  throughput: 0 rps
 +-------------------+-------------------+------+--------+------------+--------+
 |start              |end                |events|avg_temp|avg_humidity|avg_wind|
 +-------------------+-------------------+------+--------+------------+--------+
-|2026-06-22 04:00:00|2026-06-22 04:05:00|1     |20.1    |79.0        |5.1     |
-|2026-06-22 04:00:00|2026-06-22 04:05:00|2     |20.1    |79.0        |5.1     |
-|2026-06-22 04:00:00|2026-06-22 04:05:00|3     |20.1    |79.0        |5.1     |
-... (4 líneas omitidas)</p>
+|2026-06-23 14:35:00|2026-06-23 14:40:00|2     |20.2    |90.0        |17.1    |
+|2026-06-23 14:35:00|2026-06-23 14:40:00|1     |20.2    |90.0        |17.1    |
+... (5 líneas omitidas)</p>
 </details>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># Detener query previa con el mismo nombre si existe (permite re-ejecutar la celda)</span>
 </span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="k">for</span> <span class="n">q</span> <span class="ow">in</span> <span class="n">spark</span><span class="o">.</span><span class="n">streams</span><span class="o">.</span><span class="n">active</span><span class="p">:</span>
