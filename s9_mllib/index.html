@@ -1126,7 +1126,7 @@ Target: temperature_2m  |  Model path: /home/jovyan/work/models/weather_temp_mod
 <p>Entrenando LinearRegression (base)...
 LinearRegression — RMSE: 2.768 °C | MAE: 2.276 °C | R²: 0.7349
 Intercepto: 22.556
-Coeficientes: {'relative_humidity_2m': -2.1778, 'wind_speed_10m': -1.3686, 'pressure_msl': -2.3973, 'weather_code': 0.3164, 'hour_sin': -1.6976, 'hour_cos': -1.2737, 'day_of_year': 0.6338}</p>
+Coeficientes: {'relative_humidity_2m': -2.165, 'wind_speed_10m': -1.3781, 'pressure_msl': -2.4007, 'weather_code': 0.3236, 'hour_sin': -1.7101, 'hour_cos': -1.29, 'day_of_year': 0.6416}</p>
 </details>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># GBTRegressor — captura no-linealidades; sin StandardScaler (innecesario para árboles)</span>
 </span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="n">assembler2</span> <span class="o">=</span> <span class="n">VectorAssembler</span><span class="p">(</span><span class="n">inputCols</span><span class="o">=</span><span class="n">FEATURE_COLS</span><span class="p">,</span> <span class="n">outputCol</span><span class="o">=</span><span class="s2">&quot;features&quot;</span><span class="p">)</span>
@@ -1165,8 +1165,8 @@ Coeficientes: {'relative_humidity_2m': -2.1778, 'wind_speed_10m': -1.3686, 'pres
 <details class="output">
 <summary>Salida</summary>
 <p>Entrenando GBTRegressor (base — sin lags)...
-GBTRegressor (base) — RMSE: 2.019 °C | MAE: 1.276 °C | R²: 0.8590
-  σ global dataset = 5.17 °C  →  RMSE/σ = 0.39  (aceptable (&lt;0.6))</p>
+GBTRegressor (base) — RMSE: 1.949 °C | MAE: 1.261 °C | R²: 0.8685
+  σ global dataset = 5.17 °C  →  RMSE/σ = 0.38  (aceptable (&lt;0.6))</p>
 <p>Modelo base guardado en /home/jovyan/work/models/weather_temp_model</p>
 </details>
 <h3 id="s9-enhanced-gbtregressor-con-lag-features-modelo-batch">S9 Enhanced — GBTRegressor con Lag Features (modelo batch)<a class="headerlink" href="#s9-enhanced-gbtregressor-con-lag-features-modelo-batch" title="Permanent link">&para;</a></h3>
@@ -1220,15 +1220,15 @@ El modelo guardado en <code>MODEL_PATH</code> usa <code>FEATURE_COLS</code> base
 <summary>Salida</summary>
 <p>=== S9 Enhanced — GBTRegressor con lag features ===
 Entrenando GBT con lags...
-GBT base  (7 features) — RMSE: 2.019 °C | R²: 0.8590 | RMSE/σ = 0.39
-GBT + lag (10 features)— RMSE: 0.726 °C | R²: 0.9817 | RMSE/σ = 0.14</p>
-<p>Mejora con lags: ΔRMSE = -1.292 °C (64.0% mejor)
-                 ΔR²   = +0.1228</p>
+GBT base  (7 features) — RMSE: 1.949 °C | R²: 0.8685 | RMSE/σ = 0.38
+GBT + lag (10 features)— RMSE: 0.744 °C | R²: 0.9808 | RMSE/σ = 0.14</p>
+<p>Mejora con lags: ΔRMSE = -1.205 °C (61.8% mejor)
+                 ΔR²   = +0.1123</p>
 <p>=== S9 — Tabla Comparativa Final ===
            Modelo Features  RMSE   MAE     R²  RMSE/σ
  LinearRegression  base(7) 2.768 2.276 0.7349    0.53
-     GBTRegressor  base(7) 2.019 1.276 0.8590    0.39
-GBTRegressor+lags  lag(10) 0.726 0.568 0.9817    0.14</p>
+     GBTRegressor  base(7) 1.949 1.261 0.8685    0.38
+GBTRegressor+lags  lag(10) 0.744 0.582 0.9808    0.14</p>
 </details>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">subprocess</span><span class="o">,</span><span class="w"> </span><span class="nn">os</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">_os</span>
 </span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>
@@ -1294,8 +1294,8 @@ GBTRegressor+lags  lag(10) 0.726 0.568 0.9817    0.14</p>
 <p>Tablas model_metrics y temp_predictions listas
     model_name     | features | rmse  |   r2   | rmse_sigma 
 -------------------+----------+-------+--------+------------
- GBTRegressor+lags | lag(10)  | 0.727 | 0.9817 |      0.140
- GBTRegressor      | base(7)  | 2.019 | 0.8590 |      0.390
+ GBTRegressor+lags | lag(10)  | 0.744 | 0.9808 |      0.144
+ GBTRegressor      | base(7)  | 1.949 | 0.8685 |      0.377
  LinearRegression  | base(7)  | 2.768 | 0.7349 |      0.535
 (3 rows)</p>
 </details>
@@ -1315,16 +1315,16 @@ GBTRegressor+lags  lag(10) 0.726 0.568 0.9817    0.14</p>
 +----------------+---------+---------+---------+--------------------+--------------+------------+
 |timestamp       |real_temp|pred_temp|error_abs|relative_humidity_2m|wind_speed_10m|pressure_msl|
 +----------------+---------+---------+---------+--------------------+--------------+------------+
-|2026-05-24 05:00|10.4     |10.16    |0.24     |93.0                |13.3          |1028.1      |
-|2026-05-24 09:00|11.4     |10.64    |0.76     |96.0                |8.5           |1028.2      |
-|2026-05-24 11:00|12.4     |11.92    |0.48     |96.0                |8.5           |1027.7      |
-|2026-05-24 16:00|15.4     |15.57    |0.17     |82.0                |12.0          |1024.5      |
-|2026-05-24 22:00|13.8     |13.84    |0.04     |96.0                |7.8           |1023.1      |
-|2026-05-25 02:00|13.8     |13.86    |0.06     |96.0                |1.5           |1020.5      |
-|2026-05-25 08:00|14.4     |13.38    |1.02     |96.0                |4.8           |1019.3      |
-|2026-05-25 14:00|20.9     |20.06    |0.84     |74.0                |10.5          |1018.3      |
-|2026-05-26 00:00|18.0     |13.14    |4.86     |94.0                |4.5           |1018.7      |
-|2026-05-26 01:00|17.4     |12.83    |4.57     |95.0                |3.3           |1018.5      |
+|2026-05-24 05:00|10.4     |9.92     |0.48     |93.0                |13.3          |1028.1      |
+|2026-05-24 09:00|11.4     |10.36    |1.04     |96.0                |8.5           |1028.2      |
+|2026-05-24 11:00|12.4     |12.29    |0.11     |96.0                |8.5           |1027.7      |
+|2026-05-24 16:00|15.4     |15.25    |0.15     |82.0                |12.0          |1024.5      |
+|2026-05-24 22:00|13.8     |13.86    |0.06     |96.0                |7.8           |1023.1      |
+|2026-05-25 02:00|13.8     |13.66    |0.14     |96.0                |1.5           |1020.5      |
+|2026-05-25 08:00|14.4     |13.64    |0.76     |96.0                |4.8           |1019.3      |
+|2026-05-25 14:00|20.9     |20.64    |0.26     |74.0                |10.5          |1018.3      |
+|2026-05-26 00:00|18.0     |14.52    |3.48     |94.0                |4.5           |1018.7      |
+|2026-05-26 01:00|17.4     |14.59    |2.81     |95.0                |3.3           |1018.5      |
 +----------------+---------+---------+---------+--------------------+--------------+------------+
 only showing top 10 rows</p>
 </details>
