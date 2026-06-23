@@ -1,5 +1,5 @@
 {
-  "title": "ML Pipeline \u2014 Resultados S9/S10/S11",
+  "title": "ML Pipeline — Resultados S9/S10/S11",
   "uid": "ml-results-001",
   "schemaVersion": 36,
   "version": 4,
@@ -12,7 +12,7 @@
     {
       "id": 1,
       "type": "row",
-      "title": "M\u00e9tricas del Modelo Campe\u00f3n (GBT Tuned S11)",
+      "title": "Métricas del Modelo Campeón (GBT Tuned S11)",
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -24,7 +24,7 @@
     {
       "id": 30,
       "type": "stat",
-      "title": "Modelo Campe\u00f3n",
+      "title": "Modelo Campeón",
       "datasource": {
         "type": "grafana-postgresql-datasource",
         "uid": "postgres"
@@ -35,7 +35,7 @@
             "type": "grafana-postgresql-datasource",
             "uid": "postgres"
           },
-          "rawSql": "SELECT model_name FROM model_metrics ORDER BY trained_at DESC LIMIT 1",
+          "rawSql": "SELECT model_name AS \"Modelo\" FROM model_metrics ORDER BY rmse ASC LIMIT 1",
           "refId": "A",
           "format": "table",
           "rawQuery": true
@@ -51,31 +51,24 @@
         "defaults": {
           "color": {
             "mode": "fixed",
-            "fixedColor": "purple"
+            "fixedColor": "#8b5cf6"
           },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          },
-          "unit": "none"
-        },
-        "overrides": []
+          "custom": {},
+          "mappings": []
+        }
       },
       "options": {
         "reduceOptions": {
           "calcs": [
             "lastNotNull"
-          ]
+          ],
+          "fields": "/^Modelo$/",
+          "values": false
         },
         "orientation": "auto",
-        "textMode": "name",
-        "colorMode": "background"
+        "textMode": "value",
+        "colorMode": "none",
+        "graphMode": "none"
       }
     },
     {
@@ -211,7 +204,7 @@
     {
       "id": 4,
       "type": "stat",
-      "title": "R\u00b2 (S11 Champion)",
+      "title": "R² (S11 Champion)",
       "datasource": {
         "type": "grafana-postgresql-datasource",
         "uid": "postgres"
@@ -276,7 +269,7 @@
     {
       "id": 5,
       "type": "stat",
-      "title": "RMSE/\u03c3 (S11 Champion)",
+      "title": "RMSE/σ (S11 Champion)",
       "datasource": {
         "type": "grafana-postgresql-datasource",
         "uid": "postgres"
@@ -459,7 +452,7 @@
     {
       "id": 33,
       "type": "stat",
-      "title": "\u00daltimo Error Abs. Medio (Stream)",
+      "title": "Último Error Abs. Medio (Stream)",
       "datasource": {
         "type": "grafana-postgresql-datasource",
         "uid": "postgres"
@@ -591,7 +584,7 @@
             "type": "grafana-postgresql-datasource",
             "uid": "postgres"
           },
-          "rawSql": "\nSELECT\n  produced_at AS \"time\",\n  real_temp   AS \"Real (\u00b0C)\",\n  pred_temp   AS \"Predicho (\u00b0C)\"\nFROM temp_predictions\nWHERE $__timeFilter(produced_at)\nORDER BY produced_at\n",
+          "rawSql": "\nSELECT\n  produced_at AS \"time\",\n  real_temp   AS \"Real (°C)\",\n  pred_temp   AS \"Predicho (°C)\"\nFROM temp_predictions\nWHERE $__timeFilter(produced_at)\nORDER BY produced_at\n",
           "refId": "A",
           "format": "time_series",
           "rawQuery": true
@@ -614,7 +607,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Predicho (\u00b0C)"
+              "options": "Predicho (°C)"
             },
             "properties": [
               {
@@ -644,7 +637,7 @@
     {
       "id": 12,
       "type": "timeseries",
-      "title": "Error Absoluto de Predicci\u00f3n (\u00b0C)",
+      "title": "Error Absoluto de Predicción (°C)",
       "datasource": {
         "type": "grafana-postgresql-datasource",
         "uid": "postgres"
@@ -655,7 +648,7 @@
             "type": "grafana-postgresql-datasource",
             "uid": "postgres"
           },
-          "rawSql": "\nSELECT produced_at AS \"time\", error_abs AS \"Error Abs (\u00b0C)\"\nFROM temp_predictions\nWHERE $__timeFilter(produced_at)\nORDER BY produced_at\n",
+          "rawSql": "\nSELECT produced_at AS \"time\", error_abs AS \"Error Abs (°C)\"\nFROM temp_predictions\nWHERE $__timeFilter(produced_at)\nORDER BY produced_at\n",
           "refId": "A",
           "format": "time_series",
           "rawQuery": true
@@ -703,7 +696,7 @@
     {
       "id": 20,
       "type": "row",
-      "title": "Temperatura por Ventana Spark (S7 + comparaci\u00f3n ML)",
+      "title": "Temperatura por Ventana Spark (S7 + comparación ML)",
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -715,7 +708,7 @@
     {
       "id": 21,
       "type": "timeseries",
-      "title": "Temperatura Avg por Ventana (Spark \u2192 PostgreSQL)",
+      "title": "Temperatura Avg por Ventana (Spark → PostgreSQL)",
       "datasource": {
         "type": "grafana-postgresql-datasource",
         "uid": "postgres"
@@ -726,7 +719,7 @@
             "type": "grafana-postgresql-datasource",
             "uid": "postgres"
           },
-          "rawSql": "\nSELECT window_start AS \"time\", avg_temp AS \"Avg Temp (\u00b0C)\",\n       min_temp AS \"Min Temp (\u00b0C)\", max_temp AS \"Max Temp (\u00b0C)\"\nFROM weather_windows\nWHERE $__timeFilter(window_start)\nORDER BY window_start\n",
+          "rawSql": "\nSELECT window_start AS \"time\", avg_temp AS \"Avg Temp (°C)\",\n       min_temp AS \"Min Temp (°C)\", max_temp AS \"Max Temp (°C)\"\nFROM weather_windows\nWHERE $__timeFilter(window_start)\nORDER BY window_start\n",
           "refId": "A",
           "format": "time_series",
           "rawQuery": true
@@ -757,7 +750,7 @@
     {
       "id": 31,
       "type": "table",
-      "title": "Grid Search S11 \u2014 12 Experimentos (TrainValidationSplit)",
+      "title": "Grid Search S11 — 12 Experimentos (TrainValidationSplit)",
       "datasource": {
         "type": "grafana-postgresql-datasource",
         "uid": "postgres"
@@ -768,7 +761,7 @@
             "type": "grafana-postgresql-datasource",
             "uid": "postgres"
           },
-          "rawSql": "SELECT modelo, regParam, elasticNetParam, maxDepth, maxIter, ROUND(val_RMSE::numeric,4) AS val_rmse FROM s11_experiments ORDER BY val_RMSE ASC",
+          "rawSql": "SELECT\n  rank AS \"#\",\n  modelo,\n  reg_param   AS \"regParam\",\n  elastic_net AS \"elasticNet\",\n  max_depth   AS \"maxDepth\",\n  max_iter    AS \"maxIter\",\n  ROUND(val_rmse::numeric, 4) AS \"val RMSE\"\nFROM s11_experiments\nORDER BY rank ASC",
           "refId": "A",
           "format": "table",
           "rawQuery": true
