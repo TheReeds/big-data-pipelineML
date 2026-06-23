@@ -1,14 +1,13 @@
 # S8 — Observabilidad
 
 !!! abstract "Objetivo S8"
-    Exponer métricas del pipeline vía Prometheus, visualizarlas en Grafana
+    Exportar métricas del pipeline a Prometheus, visualizarlas en Grafana
     y estimar costos de operación en producción.
 
 ```mermaid
 flowchart LR
     SPARK["Spark
-Streaming Query"] -->|"recentProgress
-cada batch"| EXP["Prometheus
+Streaming Query"] -->|"recentProgress"| EXP["Prometheus
 Exporter :8001"]
     EXP -->|"scrape 15 s"| PROM["Prometheus
 :9090"]
@@ -16,23 +15,17 @@ Exporter :8001"]
 :3000"]
     PG[("PostgreSQL")] -->|"SQL datasource"| GRAF
 
-    subgraph metricas["Métricas expuestas"]
-        M1["spark_throughput_rows_per_sec"]
-        M2["spark_latency_trigger_ms"]
-        M3["spark_state_rows"]
-        M4["spark_watermark_lag_s"]
+    subgraph metricas["5 métricas expuestas"]
+        M1["throughput_rows_per_sec"]
+        M2["latency_trigger_ms"]
+        M3["state_rows"]
+        M4["watermark_lag_s"]
+        M5["input_rows_total"]
     end
-
     EXP --> metricas
-
     style PROM fill:#e65100,color:#fff
     style GRAF fill:#f57c00,color:#fff
 ```
-
-!!! warning "Nota sobre tmpfs"
-    El docker-compose monta `/tmp` como `tmpfs` sin permisos de ejecución.
-    Esto impide que Snappy cargue su librería nativa (`.so`).
-    **Solución:** usar `spark.sql.parquet.compression.codec = uncompressed` al guardar modelos.
 
 ---
 

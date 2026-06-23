@@ -1,6 +1,5 @@
 """
-Exporta 03_04_kafka_pipeline_integrado.ipynb a páginas Markdown enriquecidas para MkDocs.
-Genera admonitions, bloques de código con copy, y secciones con contexto.
+Exporta 03_04_kafka_pipeline_integrado.ipynb → páginas Markdown para MkDocs.
 """
 import json
 import textwrap
@@ -16,16 +15,15 @@ SECTIONS = {
         "title": "S6 — Apache Kafka",
         "intro": """\
 !!! abstract "Objetivo S6"
-    Implementar un pipeline Kafka completo: tópico, contrato de evento, producer en background
-    y consumer de verificación. Se usa **KRaft mode** (sin ZooKeeper) con un solo broker.
+    Implementar la capa de ingesta con Apache Kafka en modo KRaft (sin ZooKeeper):
+    creación del tópico, contrato de evento JSON, producer en background y consumer de verificación.
 
 ```mermaid
 flowchart LR
     A["🌤️ Open-Meteo API"] -->|"GET cada 10 s"| B["kafka-python\nProducer Thread"]
-    B -->|"JSON event"| C["Kafka\nweather_topic\n1 partición"]
-    C -->|"KafkaConsumer\nverificación"| D["Consumer\n(S6 verify)"]
+    B -->|"JSON event"| C["Kafka\nweather_topic\n1 partición · KRaft"]
+    C -->|"KafkaConsumer\nverificación S6"| D["Consumer\n(últimos 5 msg)"]
     C -->|"ReadStream"| E["Spark Streaming\n(S7 →)"]
-
     style C fill:#f59e0b,color:#fff
 ```
 """,
@@ -36,17 +34,16 @@ flowchart LR
         "title": "S7 — Structured Streaming",
         "intro": """\
 !!! abstract "Objetivo S7"
-    Procesar el stream de Kafka con Spark Structured Streaming aplicando watermark
-    y ventanas de tiempo. Comparar triggers y medir latencia/throughput.
+    Procesar el stream de Kafka con watermark y ventanas tumbling.
+    Comparar triggers y medir latencia/throughput en 3 experimentos.
 
 ```mermaid
 flowchart LR
     K["Kafka\nweather_topic"] -->|"ReadStream"| P["parse JSON\nSchema tipado"]
     P -->|"withWatermark\n10 min"| W["window\n5 min tumbling"]
-    W -->|"avg/min/max"| AGG["Agregaciones"]
-    AGG -->|"foreachBatch"| PG[("PostgreSQL\nweather_windows")]
+    W --> AGG["avg/min/max\nhumedad · viento"]
+    AGG -->|"foreachBatch JDBC"| PG[("PostgreSQL\nweather_windows")]
     AGG -->|"memory sink"| MEM["spark.sql()"]
-
     style W fill:#8b5cf6,color:#fff
     style PG fill:#10b981,color:#fff
 ```
@@ -56,7 +53,7 @@ flowchart LR
     |-----------|-------|--------|
     | Watermark | 10 min | Tolera retrasos de la API externa |
     | Ventana | 5 min | Granularidad adecuada para temperatura |
-    | Trigger | 10 s | Latencia baja sin overhead excesivo |
+    | Trigger | 10 s | Latencia baja sin overhead |
     | Output mode | `update` | Solo emite ventanas modificadas |
 """,
         "cells": ["c15", "c16", "c14", "c14b", "c14c", "c17", "c20", "c21", "c22", "c23", "c24"],
@@ -66,33 +63,27 @@ flowchart LR
         "title": "S8 — Observabilidad",
         "intro": """\
 !!! abstract "Objetivo S8"
-    Exponer métricas del pipeline vía Prometheus, visualizarlas en Grafana
+    Exportar métricas del pipeline a Prometheus, visualizarlas en Grafana
     y estimar costos de operación en producción.
 
 ```mermaid
 flowchart LR
-    SPARK["Spark\nStreaming Query"] -->|"recentProgress\ncada batch"| EXP["Prometheus\nExporter :8001"]
+    SPARK["Spark\nStreaming Query"] -->|"recentProgress"| EXP["Prometheus\nExporter :8001"]
     EXP -->|"scrape 15 s"| PROM["Prometheus\n:9090"]
     PROM -->|"datasource"| GRAF["Grafana\n:3000"]
     PG[("PostgreSQL")] -->|"SQL datasource"| GRAF
 
-    subgraph metricas["Métricas expuestas"]
-        M1["spark_throughput_rows_per_sec"]
-        M2["spark_latency_trigger_ms"]
-        M3["spark_state_rows"]
-        M4["spark_watermark_lag_s"]
+    subgraph metricas["5 métricas expuestas"]
+        M1["throughput_rows_per_sec"]
+        M2["latency_trigger_ms"]
+        M3["state_rows"]
+        M4["watermark_lag_s"]
+        M5["input_rows_total"]
     end
-
     EXP --> metricas
-
     style PROM fill:#e65100,color:#fff
     style GRAF fill:#f57c00,color:#fff
 ```
-
-!!! warning "Nota sobre tmpfs"
-    El docker-compose monta `/tmp` como `tmpfs` sin permisos de ejecución.
-    Esto impide que Snappy cargue su librería nativa (`.so`).
-    **Solución:** usar `spark.sql.parquet.compression.codec = uncompressed` al guardar modelos.
 """,
         "cells": [
             "c25", "c26", "c27", "c27a", "c27a_code",
@@ -101,48 +92,40 @@ flowchart LR
     },
     "s9": {
         "file": "s9_mllib.md",
-        "title": "S9 — ML Distribuido con MLlib",
+        "title": "S9 — ML Distribuido con MLlib (CRISP-DM)",
         "intro": """\
 !!! abstract "Objetivo S9"
-    Entrenar modelos de regresión con MLlib para predecir temperatura.
+    Entrenar modelos de regresión con MLlib siguiendo la metodología **CRISP-DM**.
     Dataset: 741 registros históricos de Open-Meteo Archive (30 días).
-    Comparar LinearRegression vs GBTRegressor con y sin lag features.
 
 ```mermaid
 flowchart TB
-    HIST["Open-Meteo Archive\n30 días · 741 registros"] -->|"feature engineering"| FE
-
-    subgraph FE["Feature Engineering"]
-        F1["hour_sin / hour_cos\ncyclic encoding"]
-        F2["day_of_year\nestacionalidad"]
-        F3["temp_lag1/2/3\nlag features (batch only)"]
+    subgraph CRISP["CRISP-DM"]
+        BU["① Business\nUnderstanding"]
+        DU["② Data\nUnderstanding\nEDA"]
+        DP["③ Data\nPreparation"]
+        MOD["④ Modeling"]
+        EVAL["⑤ Evaluation"]
+        DEP["⑥ Deployment"]
+        BU --> DU --> DP --> MOD --> EVAL --> DEP
     end
 
-    FE --> SPLIT["Train/Test split\nrandomSplit 80/20\n597 / 144"]
-
-    SPLIT --> LR["LinearRegression\nStandardScaler\nRMSE=2.97 · R²=0.73"]
-    SPLIT --> GBT["GBTRegressor\nbase 7 features\nRMSE=1.48 · R²=0.93"]
-    SPLIT --> LAG["GBTRegressor\n+ lags 10 features\nRMSE=0.92 · R²=0.97"]
-
-    GBT -->|"save model"| SAVED["MODEL_PATH\n/work/models/weather_temp_model"]
-    SAVED -->|"S10 →"| INF["Streaming\nInference"]
+    DP -->|"7 features base\n+ lags batch"| MOD
+    MOD --> LR["LinearRegression\nRMSE=2.97 · R²=0.73"]
+    MOD --> GBT["GBTRegressor base\nRMSE=1.48 · R²=0.93"]
+    MOD --> LAG["GBT + lags\nRMSE=0.92 · R²=0.97"]
+    GBT -->|"save"| SAVED["MODEL_PATH\nweather_temp_model"]
+    EVAL -->|"RMSE/σ=0.27 ✅"| DEP
+    SAVED -->|"S10 Inferencia"| INF["Streaming\nInference"]
 
     style GBT fill:#ec4899,color:#fff
     style LAG fill:#6366f1,color:#fff
-    style SAVED fill:#10b981,color:#fff
 ```
-
-!!! success "Resultados"
-    | Modelo | RMSE | R² | RMSE/σ | Uso |
-    |--------|------|-----|--------|-----|
-    | LinearRegression | 2.965°C | 0.726 | 0.54 | Baseline |
-    | GBTRegressor base | 1.479°C | 0.932 | 0.27 | **Streaming** |
-    | GBT + lag features | **0.922°C** | **0.974** | **0.17** | Batch/histórico |
-
-    RMSE/σ < 0.6 → modelo aceptable para producción.
 """,
         "cells": [
-            "s9_md", "s9_data", "s9_spark_df",
+            "s9_md", "crisp_bu",
+            "s9_data", "crisp_du_md", "crisp_eda",
+            "crisp_dp_md", "s9_spark_df",
             "s9_lr", "s9_gbt",
             "s9_lag_md", "s9_lag",
             "s9_pg_save", "s9_preds",
@@ -150,77 +133,82 @@ flowchart TB
     },
     "s10": {
         "file": "s10_series_tiempo.md",
-        "title": "S10 — Series de Tiempo e Inferencia Streaming",
+        "title": "S10 — Series de Tiempo, Inferencia y Forecasting",
         "intro": """\
 !!! abstract "Objetivo S10"
-    Analizar patrones temporales en la serie de temperatura (ciclo diario, autocorrelación)
-    y aplicar inferencia en tiempo real: el stream de Kafka pasa por el modelo GBT guardado.
+    Tres partes: (1) análisis de patrones temporales, (2) forecast +1h y +24h,
+    (3) inferencia en streaming sobre Kafka.
 
 ```mermaid
-flowchart LR
-    subgraph ts["Análisis Temporal"]
-        HIST["Serie histórica\n741 puntos"] --> HOUR["Promedio por hora\npeak 16:00 = 26.4°C\ncold 06:00 = 17.4°C"]
-        HIST --> AUTO["Autocorrelación\nlag-24h = 0.739 ≥ 0.7\n✅ ciclo diario confirmado"]
+flowchart TB
+    subgraph analisis["① Análisis Temporal"]
+        HIST["Serie 30 días\n741 puntos"] --> HOUR["Ciclo diario\npeak 16:00=26.4°C\ncold 06:00=17.4°C"]
+        HIST --> AUTO["Autocorr lag-24h\n= 0.739 ≥ 0.7 ✅"]
     end
 
-    subgraph inf["Inferencia Streaming"]
-        KAFKA["Kafka\nweather_topic"] -->|"ReadStream"| FEAT["Feature\nEngineering\nhour_sin/cos · day_of_year"]
-        FEAT -->|"transform"| MODEL["GBT Model\n(cargado)"]
-        MODEL -->|"foreachBatch"| PG[("temp_predictions\nPostgreSQL")]
-        PG --> GRAF["Grafana\nReal vs Predicho"]
+    subgraph forecast["② Forecasting"]
+        F1H["+1h → GBT+lags\nlag-shift actual→lag1\n±RMSE=0.92°C"]
+        F24H["+24h → GBT base\nOpen-Meteo hourly API\nMAE vs API reference"]
+        F24H -->|"JDBC"| WF[("weather_forecast\nPostgreSQL")]
     end
 
-    style MODEL fill:#ec4899,color:#fff
-    style PG fill:#10b981,color:#fff
+    subgraph streaming["③ Inferencia Streaming"]
+        KAFKA["Kafka\nweather_topic"] --> MODEL["PipelineModel\nGBT base"]
+        MODEL -->|"foreachBatch"| TP[("temp_predictions\nPostgreSQL")]
+    end
+
+    style WF fill:#10b981,color:#fff
+    style TP fill:#10b981,color:#fff
 ```
-
-!!! info "Autocorrelación lag-24h"
-    Un valor ≥ 0.7 confirma que la temperatura de hoy a las 14:00 es un buen predictor
-    de la temperatura de mañana a las 14:00 — ciclo circadiano estadísticamente significativo.
 """,
-        "cells": ["s10_md", "s10_ts", "s10_stream"],
+        "cells": [
+            "s10_md", "s10_ts",
+            "s10_forecast_md", "s10_forecast_1h", "s10_forecast_24h",
+            "s10_stream",
+        ],
     },
     "s11": {
         "file": "s11_tuning.md",
         "title": "S11 — Tuning y Experimentación Distribuida",
         "intro": """\
 !!! abstract "Objetivo S11"
-    Optimizar hiperparámetros con `TrainValidationSplit` (equivalente distribuido de GridSearchCV).
-    Se evalúan 6 configuraciones de LR y 6 de GBT → tabla de 12 experimentos.
+    Optimizar hiperparámetros con `TrainValidationSplit`.
+    12 experimentos (6 LR + 6 GBT). Campeón persiste en PostgreSQL.
 
 ```mermaid
 flowchart TB
-    TRAIN["Training Set\n597 registros"] --> TVS
+    TRAIN["Training Set\n597 registros"] --> TVS["TrainValidationSplit\ntrainRatio=0.8"]
 
-    subgraph TVS["TrainValidationSplit\ntrainRatio=0.8"]
-        subgraph LR_GRID["LR Grid — 6 configs"]
-            LR1["regParam=0.01\nelasticNet=0.0"]
-            LR2["regParam=0.01\nelasticNet=0.5"]
-            LR3["regParam=0.1 ..."]
-        end
-        subgraph GBT_GRID["GBT Grid — 6 configs"]
-            G1["maxDepth=3\nmaxIter=50"]
-            G2["maxDepth=5\nmaxIter=50"]
-            G3["maxDepth=7 ..."]
-        end
+    subgraph LR_GRID["LR — 6 configs\nregParam × elasticNet"]
+        L1["0.01/0.0"] & L2["0.01/0.5"] & L3["0.1/0.0"] & L4["0.1/0.5"] & L5["1.0/0.0"] & L6["1.0/0.5"]
+    end
+    subgraph GBT_GRID["GBT — 6 configs\nmaxDepth × maxIter"]
+        G1["3×50 ⭐"] & G2["5×50"] & G3["5×30"] & G4["3×30"] & G5["7×50"] & G6["7×30"]
     end
 
-    TVS -->|"best LR"| BEST_LR["LR campeón\nregParam=0.01 · elasticNet=0.0\nval RMSE=2.648°C"]
-    TVS -->|"best GBT"| BEST_GBT["GBT campeón\nmaxDepth=3 · maxIter=50\nval RMSE=1.738°C"]
+    TVS --> LR_GRID & GBT_GRID
+    G1 -->|"test RMSE=1.558°C"| FINAL["GBT Tuned S11\nR²=0.924 · RMSE/σ=0.28 ✅"]
+    FINAL -->|"save"| FPATH["weather_temp_model_final"]
+    FINAL -->|"INSERT"| PG[("model_metrics\ns11_experiments\nPostgreSQL")]
 
-    BEST_GBT -->|"test set"| FINAL["Test RMSE=1.558°C\nR²=0.924\n47.4% mejor que LR"]
-    FINAL -->|"save"| MODEL["FINAL_MODEL_PATH\nweather_temp_model_final"]
-
-    style BEST_GBT fill:#10b981,color:#fff
+    style G1 fill:#10b981,color:#fff
     style FINAL fill:#ec4899,color:#fff
 ```
 
 !!! success "Hallazgo S11"
-    Con `day_of_year` como feature, `maxDepth=7` ya no sobreajusta (antes era el peor).
-    Features más ricas permiten árboles más profundos sin overfitting.
-    **Champion: GBT maxDepth=3, test RMSE=1.558°C, R²=0.924.**
+    `maxDepth=7` es el **peor** resultado — con 597 muestras los árboles profundos sobreajustan.
+    `maxDepth=3` generaliza mejor: **test RMSE=1.558°C, 47.4% mejor que LR campeón**.
 """,
-        "cells": ["s11_md", "s11_lr_tune", "s11_gbt_tune", "s11_final"],
+        "cells": [
+            "s11_md", "s11_lr_tune", "s11_gbt_tune",
+            "s11_final", "s11_pg_save", "crisp_deploy",
+        ],
+    },
+    "arquitectura": {
+        "file": "arquitectura.md",
+        "title": "Arquitectura del Pipeline",
+        "intro": "",   # esta página se escribe manualmente abajo
+        "cells": [],
     },
 }
 
@@ -230,7 +218,7 @@ nb = json.loads(NOTEBOOK.read_text())
 cell_map = {c.get("id", ""): c for c in nb["cells"]}
 
 
-def cell_to_md(cell: dict) -> str:
+def cell_to_md(cell):
     src = "".join(cell["source"]).rstrip()
     if not src:
         return ""
@@ -241,13 +229,10 @@ def cell_to_md(cell: dict) -> str:
     return ""
 
 
-def outputs_to_md(cell: dict) -> str:
+def outputs_to_md(cell):
     parts = []
     for out in cell.get("outputs", []):
-        text = (
-            out.get("text", [])
-            or out.get("data", {}).get("text/plain", [])
-        )
+        text = out.get("text", []) or out.get("data", {}).get("text/plain", [])
         if text:
             parts.append("".join(text).rstrip())
     if not parts:
@@ -257,13 +242,14 @@ def outputs_to_md(cell: dict) -> str:
     if len(lines) > 35:
         lines = lines[:35] + [f"... ({len(lines)-35} líneas omitidas)"]
         combined = "\n".join(lines)
-    indented = textwrap.indent(combined, "    ")
-    return f'\n??? output "Salida"\n{indented}\n'
+    return f'\n??? output "Salida"\n{textwrap.indent(combined, "    ")}\n'
 
 
 for section_key, cfg in SECTIONS.items():
-    chunks = [f"# {cfg['title']}\n", cfg.get("intro", ""), "---\n"]
+    if section_key == "arquitectura":
+        continue  # se genera manualmente más abajo
 
+    chunks = [f"# {cfg['title']}\n", cfg.get("intro", ""), "---\n"]
     for cid in cfg["cells"]:
         if cid in SKIP_CELLS:
             continue
@@ -274,14 +260,13 @@ for section_key, cfg in SECTIONS.items():
         if md:
             chunks.append(md)
             if cell["cell_type"] == "code" and cell.get("outputs"):
-                out_md = outputs_to_md(cell)
-                if out_md:
-                    chunks.append(out_md)
+                out = outputs_to_md(cell)
+                if out:
+                    chunks.append(out)
         chunks.append("")
 
-    content = "\n".join(chunks).strip() + "\n"
     out_path = DOCS_DIR / cfg["file"]
-    out_path.write_text(content, encoding="utf-8")
-    print(f"  ✓  {out_path}  ({len(content):,} bytes)")
+    out_path.write_text("\n".join(chunks).strip() + "\n", encoding="utf-8")
+    print(f"  ✓  {out_path}  ({out_path.stat().st_size:,} bytes)")
 
 print("\nExportación completada.")

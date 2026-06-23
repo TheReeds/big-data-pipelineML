@@ -1,8 +1,8 @@
 # S6 — Apache Kafka
 
 !!! abstract "Objetivo S6"
-    Implementar un pipeline Kafka completo: tópico, contrato de evento, producer en background
-    y consumer de verificación. Se usa **KRaft mode** (sin ZooKeeper) con un solo broker.
+    Implementar la capa de ingesta con Apache Kafka en modo KRaft (sin ZooKeeper):
+    creación del tópico, contrato de evento JSON, producer en background y consumer de verificación.
 
 ```mermaid
 flowchart LR
@@ -10,13 +10,12 @@ flowchart LR
 Producer Thread"]
     B -->|"JSON event"| C["Kafka
 weather_topic
-1 partición"]
+1 partición · KRaft"]
     C -->|"KafkaConsumer
-verificación"| D["Consumer
-(S6 verify)"]
+verificación S6"| D["Consumer
+(últimos 5 msg)"]
     C -->|"ReadStream"| E["Spark Streaming
 (S7 →)"]
-
     style C fill:#f59e0b,color:#fff
 ```
 
@@ -112,8 +111,7 @@ for line in _producer_log[-8:]:
 
 
 ??? output "Salida"
-    Producer vivo: True | Eventos enviados: 1
-      [#  1] offset=  80 | temp=20.0°C | wind=15.7 km/h | at=2026-06-23T14:59:55
+    Producer vivo: True | Eventos enviados: 0
 
 
 ## 5. Spark Structured Streaming — ReadStream desde Kafka (S6 + S7)

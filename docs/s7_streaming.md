@@ -1,8 +1,8 @@
 # S7 — Structured Streaming
 
 !!! abstract "Objetivo S7"
-    Procesar el stream de Kafka con Spark Structured Streaming aplicando watermark
-    y ventanas de tiempo. Comparar triggers y medir latencia/throughput.
+    Procesar el stream de Kafka con watermark y ventanas tumbling.
+    Comparar triggers y medir latencia/throughput en 3 experimentos.
 
 ```mermaid
 flowchart LR
@@ -12,11 +12,11 @@ Schema tipado"]
     P -->|"withWatermark
 10 min"| W["window
 5 min tumbling"]
-    W -->|"avg/min/max"| AGG["Agregaciones"]
-    AGG -->|"foreachBatch"| PG[("PostgreSQL
+    W --> AGG["avg/min/max
+humedad · viento"]
+    AGG -->|"foreachBatch JDBC"| PG[("PostgreSQL
 weather_windows")]
     AGG -->|"memory sink"| MEM["spark.sql()"]
-
     style W fill:#8b5cf6,color:#fff
     style PG fill:#10b981,color:#fff
 ```
@@ -26,7 +26,7 @@ weather_windows")]
     |-----------|-------|--------|
     | Watermark | 10 min | Tolera retrasos de la API externa |
     | Ventana | 5 min | Granularidad adecuada para temperatura |
-    | Trigger | 10 s | Latencia baja sin overhead excesivo |
+    | Trigger | 10 s | Latencia baja sin overhead |
     | Output mode | `update` | Solo emite ventanas modificadas |
 
 ---

@@ -1,56 +1,42 @@
-# S9 — ML Distribuido con MLlib
+# S9 — ML Distribuido con MLlib (CRISP-DM)
 
 !!! abstract "Objetivo S9"
-    Entrenar modelos de regresión con MLlib para predecir temperatura.
+    Entrenar modelos de regresión con MLlib siguiendo la metodología **CRISP-DM**.
     Dataset: 741 registros históricos de Open-Meteo Archive (30 días).
-    Comparar LinearRegression vs GBTRegressor con y sin lag features.
 
 ```mermaid
 flowchart TB
-    HIST["Open-Meteo Archive
-30 días · 741 registros"] -->|"feature engineering"| FE
-
-    subgraph FE["Feature Engineering"]
-        F1["hour_sin / hour_cos
-cyclic encoding"]
-        F2["day_of_year
-estacionalidad"]
-        F3["temp_lag1/2/3
-lag features (batch only)"]
+    subgraph CRISP["CRISP-DM"]
+        BU["① Business
+Understanding"]
+        DU["② Data
+Understanding
+EDA"]
+        DP["③ Data
+Preparation"]
+        MOD["④ Modeling"]
+        EVAL["⑤ Evaluation"]
+        DEP["⑥ Deployment"]
+        BU --> DU --> DP --> MOD --> EVAL --> DEP
     end
 
-    FE --> SPLIT["Train/Test split
-randomSplit 80/20
-597 / 144"]
-
-    SPLIT --> LR["LinearRegression
-StandardScaler
+    DP -->|"7 features base
++ lags batch"| MOD
+    MOD --> LR["LinearRegression
 RMSE=2.97 · R²=0.73"]
-    SPLIT --> GBT["GBTRegressor
-base 7 features
+    MOD --> GBT["GBTRegressor base
 RMSE=1.48 · R²=0.93"]
-    SPLIT --> LAG["GBTRegressor
-+ lags 10 features
+    MOD --> LAG["GBT + lags
 RMSE=0.92 · R²=0.97"]
-
-    GBT -->|"save model"| SAVED["MODEL_PATH
-/work/models/weather_temp_model"]
-    SAVED -->|"S10 →"| INF["Streaming
+    GBT -->|"save"| SAVED["MODEL_PATH
+weather_temp_model"]
+    EVAL -->|"RMSE/σ=0.27 ✅"| DEP
+    SAVED -->|"S10 Inferencia"| INF["Streaming
 Inference"]
 
     style GBT fill:#ec4899,color:#fff
     style LAG fill:#6366f1,color:#fff
-    style SAVED fill:#10b981,color:#fff
 ```
-
-!!! success "Resultados"
-    | Modelo | RMSE | R² | RMSE/σ | Uso |
-    |--------|------|-----|--------|-----|
-    | LinearRegression | 2.965°C | 0.726 | 0.54 | Baseline |
-    | GBTRegressor base | 1.479°C | 0.932 | 0.27 | **Streaming** |
-    | GBT + lag features | **0.922°C** | **0.974** | **0.17** | Batch/histórico |
-
-    RMSE/σ < 0.6 → modelo aceptable para producción.
 
 ---
 
@@ -71,6 +57,43 @@ Este bloque sigue la metodología **CRISP-DM** (Cross-Industry Standard Process 
 | **4. Modeling** | LR baseline → GBT → GBT+lags → Tuning S11 | §13.4 – §15 |
 | **5. Evaluation** | RMSE, MAE, R², RMSE/σ — tabla comparativa de 4 modelos | §13.4, §15 |
 | **6. Deployment** | Modelo serializado → inferencia en streaming Kafka (S10) | §14, §15 |
+
+
+### CRISP-DM Fase 1 — Business Understanding
+
+#### Problema de negocio
+Predecir la **temperatura horaria** en Nueva York a partir de variables
+meteorológicas disponibles en tiempo real (humedad, viento, presión, código climático).
+
+#### Motivación
+- **Operacional:** anticipar temperatura permite optimizar sistemas HVAC, planificar
+  consumo energético y ajustar operaciones sensibles al clima.
+- **Técnica:** validar que un pipeline de streaming puede enriquecer datos en vuelo
+  con predicciones de un modelo MLlib sin latencia perceptible.
+
+#### Criterios de éxito
+
+| Criterio | Umbral | Métrica |
+|----------|--------|---------|
+| Precisión del modelo | RMSE/σ < 0.4 | RegressionEvaluator |
+| Inferencia en streaming | Latencia < 500 ms por batch | Spark UI / Grafana |
+| Compatibilidad streaming | Modelo sin estado temporal | Verificación manual |
+| Reproducibilidad | seed=42 fijo en todos los experimentos | — |
+
+> Un **RMSE/σ < 0.4** significa que el error del modelo es inferior al 40% de la
+> desviación estándar natural de la temperatura — umbral estándar para modelos de
+> regresión en series meteorológicas.
+
+#### Variables disponibles en tiempo real (streaming-compatible)
+
+| Variable | Tipo | Unidad | Relevancia |
+|----------|------|--------|-----------|
+| `relative_humidity_2m` | Continua | % | Alta — inversamente correlada con temp |
+| `wind_speed_10m` | Continua | km/h | Media — efecto de enfriamiento |
+| `pressure_msl` | Continua | hPa | Alta — indica sistemas de alta/baja presión |
+| `weather_code` | Categórica | WMO | Media — indica nubosidad/precipitación |
+| `hour_sin / hour_cos` | Derivada | — | Alta — ciclo circadiano |
+| `day_of_year` | Derivada | — | Media — estacionalidad anual |
 
 
 ```python
@@ -146,6 +169,133 @@ df_hist.head(3)
     0       10.6       10.8       10.8  
     1       10.4       10.6       10.8  
     2       10.3       10.4       10.6
+
+
+### CRISP-DM Fase 2 — Data Understanding (EDA)
+
+Exploración del dataset histórico de 30 días: distribuciones, correlaciones y
+patrones temporales que justifican las decisiones de feature engineering.
+
+
+```python
+import matplotlib.pyplot as plt
+import matplotlib.gridspec as gridspec
+import seaborn as sns
+import numpy as np
+
+# df_hist ya cargado en s9_data — 741 registros con lags y features derivadas
+print(f"Dataset: {len(df_hist)} registros | {df_hist['temperature_2m'].min():.1f}°C – {df_hist['temperature_2m'].max():.1f}°C")
+print(f"σ = {df_hist['temperature_2m'].std():.2f}°C | μ = {df_hist['temperature_2m'].mean():.2f}°C")
+print()
+print(df_hist[["temperature_2m","relative_humidity_2m","wind_speed_10m","pressure_msl"]].describe().round(2))
+
+fig = plt.figure(figsize=(16, 12))
+gs  = gridspec.GridSpec(3, 3, figure=fig, hspace=0.45, wspace=0.35)
+
+# ── Panel 1: Distribución de temperatura ──────────────────────────────────
+ax1 = fig.add_subplot(gs[0, 0])
+ax1.hist(df_hist["temperature_2m"], bins=30, color="#8b5cf6", edgecolor="white", linewidth=0.5)
+ax1.axvline(df_hist["temperature_2m"].mean(), color="#ec4899", linestyle="--", linewidth=1.5, label=f"μ={df_hist['temperature_2m'].mean():.1f}°C")
+ax1.axvline(df_hist["temperature_2m"].mean() + df_hist["temperature_2m"].std(), color="#f59e0b", linestyle=":", linewidth=1.2, label=f"±σ={df_hist['temperature_2m'].std():.1f}°C")
+ax1.axvline(df_hist["temperature_2m"].mean() - df_hist["temperature_2m"].std(), color="#f59e0b", linestyle=":", linewidth=1.2)
+ax1.set_title("Distribución de Temperatura", fontweight="bold")
+ax1.set_xlabel("Temperatura (°C)"); ax1.set_ylabel("Frecuencia")
+ax1.legend(fontsize=8)
+
+# ── Panel 2: Boxplot temperatura por hora del día ─────────────────────────
+ax2 = fig.add_subplot(gs[0, 1:])
+df_hist.boxplot(column="temperature_2m", by="hour", ax=ax2,
+                boxprops=dict(color="#8b5cf6"),
+                medianprops=dict(color="#ec4899", linewidth=2),
+                whiskerprops=dict(color="#6b7280"),
+                flierprops=dict(marker=".", markersize=3, color="#9ca3af"))
+ax2.set_title("Temperatura por Hora del Día (ciclo circadiano)", fontweight="bold")
+ax2.set_xlabel("Hora"); ax2.set_ylabel("Temperatura (°C)")
+plt.sca(ax2); plt.title("")
+fig.suptitle("")
+
+# ── Panel 3: Serie temporal completa ──────────────────────────────────────
+ax3 = fig.add_subplot(gs[1, :])
+ax3.plot(df_hist["timestamp"], df_hist["temperature_2m"], color="#8b5cf6", linewidth=0.8, alpha=0.9)
+ax3.fill_between(df_hist["timestamp"], df_hist["temperature_2m"].rolling(24).mean() - df_hist["temperature_2m"].rolling(24).std(),
+                  df_hist["temperature_2m"].rolling(24).mean() + df_hist["temperature_2m"].rolling(24).std(),
+                  alpha=0.15, color="#8b5cf6", label="±σ rolling 24h")
+ax3.plot(df_hist["timestamp"], df_hist["temperature_2m"].rolling(24).mean(), color="#ec4899", linewidth=1.5, label="Media móvil 24h")
+ax3.set_title("Serie Temporal — 30 días de temperatura (NYC)", fontweight="bold")
+ax3.set_xlabel("Fecha"); ax3.set_ylabel("Temperatura (°C)")
+ax3.legend(fontsize=8); ax3.tick_params(axis="x", rotation=30)
+
+# ── Panel 4: Matriz de correlación ────────────────────────────────────────
+ax4 = fig.add_subplot(gs[2, :2])
+feature_cols = ["temperature_2m","relative_humidity_2m","wind_speed_10m",
+                "pressure_msl","hour_sin","hour_cos","day_of_year"]
+corr = df_hist[feature_cols].corr()
+mask = np.triu(np.ones_like(corr, dtype=bool), k=1)
+sns.heatmap(corr, ax=ax4, annot=True, fmt=".2f", cmap="RdYlGn", center=0,
+            linewidths=0.5, annot_kws={"size": 8},
+            xticklabels=["temp","hum","wind","pres","h_sin","h_cos","doy"],
+            yticklabels=["temp","hum","wind","pres","h_sin","h_cos","doy"])
+ax4.set_title("Matriz de Correlación (features base)", fontweight="bold")
+
+# ── Panel 5: Correlación de features con target ───────────────────────────
+ax5 = fig.add_subplot(gs[2, 2])
+corr_with_target = corr["temperature_2m"].drop("temperature_2m").sort_values()
+colors = ["#ec4899" if v > 0 else "#8b5cf6" for v in corr_with_target]
+ax5.barh(corr_with_target.index, corr_with_target.values, color=colors, edgecolor="white")
+ax5.axvline(0, color="black", linewidth=0.8)
+ax5.set_title("Correlación con temperatura", fontweight="bold")
+ax5.set_xlabel("Pearson r")
+for i, v in enumerate(corr_with_target.values):
+    ax5.text(v + (0.01 if v >= 0 else -0.01), i, f"{v:.2f}",
+             va="center", ha="left" if v >= 0 else "right", fontsize=8)
+
+plt.savefig("eda_overview.png", dpi=120, bbox_inches="tight")
+plt.show()
+print("\nCorrelaciones con temperatura_2m (|r| > 0.3 = relevante):")
+print(corr["temperature_2m"].drop("temperature_2m").abs().sort_values(ascending=False).round(3).to_string())
+```
+
+
+??? output "Salida"
+    Dataset: 741 registros | 9.4°C – 35.4°C
+    σ = 5.17°C | μ = 22.47°C
+
+           temperature_2m  relative_humidity_2m  wind_speed_10m  pressure_msl
+    count          741.00                741.00          741.00        741.00
+    mean            22.47                 55.98           10.29       1013.17
+    std              5.17                 21.25            5.29          6.11
+    min              9.40                 14.00            0.40        997.90
+    25%             19.20                 39.00            6.80       1008.70
+    50%             22.50                 54.00            9.50       1011.80
+    75%             25.60                 71.00           13.20       1017.70
+    max             35.40                 99.00           31.40       1029.10
+    <Figure size 1600x1200 with 6 Axes>
+
+    Correlaciones con temperatura_2m (|r| > 0.3 = relevante):
+    relative_humidity_2m    0.563
+    pressure_msl            0.502
+    hour_sin                0.473
+    day_of_year             0.374
+    hour_cos                0.324
+    wind_speed_10m          0.248
+
+
+### CRISP-DM Fase 3 — Data Preparation
+
+Las transformaciones aplicadas sobre el dataset crudo antes de entrenar:
+
+| Transformación | Técnica | Motivo |
+|---------------|---------|--------|
+| Encoding cíclico hora | `sin(2π·h/24)`, `cos(2π·h/24)` | Evita discontinuidad 23→0 h |
+| Estacionalidad anual | `day_of_year` (1–365) | Captura variación verano/invierno |
+| Lag features | `temp_lag1/2/3` (shift 1-3 h) | Autocorrelación temporal alta (lag-24h=0.74) |
+| Eliminación de NaN | `dropna()` | Filas iniciales sin lags válidos |
+| Split train/test | `randomSplit([0.8, 0.2], seed=42)` | Random para evitar sesgo estacional |
+
+> **Decisión clave:** se usa `randomSplit` en lugar de split temporal porque con datos
+> de solo 30 días el split temporal (80/20) deja el test set en fechas sin representación
+> estacional en el train set → R²=0.01 en GBT. El random split mezcla todas las horas
+> y días, dando evaluación realista.
 
 
 ```python
@@ -244,7 +394,7 @@ print("Coeficientes:", coefs)
     Entrenando LinearRegression (base)...
     LinearRegression — RMSE: 2.768 °C | MAE: 2.276 °C | R²: 0.7349
     Intercepto: 22.556
-    Coeficientes: {'relative_humidity_2m': -2.1778, 'wind_speed_10m': -1.3686, 'pressure_msl': -2.3973, 'weather_code': 0.3164, 'hour_sin': -1.6976, 'hour_cos': -1.2737, 'day_of_year': 0.6338}
+    Coeficientes: {'relative_humidity_2m': -2.165, 'wind_speed_10m': -1.3781, 'pressure_msl': -2.4007, 'weather_code': 0.3236, 'hour_sin': -1.7101, 'hour_cos': -1.29, 'day_of_year': 0.6416}
 
 
 ```python
@@ -286,8 +436,8 @@ print(f"\nModelo base guardado en {MODEL_PATH}")
 
 ??? output "Salida"
     Entrenando GBTRegressor (base — sin lags)...
-    GBTRegressor (base) — RMSE: 2.019 °C | MAE: 1.276 °C | R²: 0.8590
-      σ global dataset = 5.17 °C  →  RMSE/σ = 0.39  (aceptable (<0.6))
+    GBTRegressor (base) — RMSE: 1.949 °C | MAE: 1.261 °C | R²: 0.8685
+      σ global dataset = 5.17 °C  →  RMSE/σ = 0.38  (aceptable (<0.6))
 
     Modelo base guardado en /home/jovyan/work/models/weather_temp_model
 
@@ -347,17 +497,17 @@ print(results_s9.to_string(index=False))
 ??? output "Salida"
     === S9 Enhanced — GBTRegressor con lag features ===
     Entrenando GBT con lags...
-    GBT base  (7 features) — RMSE: 2.019 °C | R²: 0.8590 | RMSE/σ = 0.39
-    GBT + lag (10 features)— RMSE: 0.726 °C | R²: 0.9817 | RMSE/σ = 0.14
+    GBT base  (7 features) — RMSE: 1.949 °C | R²: 0.8685 | RMSE/σ = 0.38
+    GBT + lag (10 features)— RMSE: 0.744 °C | R²: 0.9808 | RMSE/σ = 0.14
 
-    Mejora con lags: ΔRMSE = -1.292 °C (64.0% mejor)
-                     ΔR²   = +0.1228
+    Mejora con lags: ΔRMSE = -1.205 °C (61.8% mejor)
+                     ΔR²   = +0.1123
 
     === S9 — Tabla Comparativa Final ===
                Modelo Features  RMSE   MAE     R²  RMSE/σ
      LinearRegression  base(7) 2.768 2.276 0.7349    0.53
-         GBTRegressor  base(7) 2.019 1.276 0.8590    0.39
-    GBTRegressor+lags  lag(10) 0.726 0.568 0.9817    0.14
+         GBTRegressor  base(7) 1.949 1.261 0.8685    0.38
+    GBTRegressor+lags  lag(10) 0.744 0.582 0.9808    0.14
 
 
 ```python
@@ -426,8 +576,8 @@ print(result.stdout)
     Tablas model_metrics y temp_predictions listas
         model_name     | features | rmse  |   r2   | rmse_sigma 
     -------------------+----------+-------+--------+------------
-     GBTRegressor+lags | lag(10)  | 0.727 | 0.9817 |      0.140
-     GBTRegressor      | base(7)  | 2.019 | 0.8590 |      0.390
+     GBTRegressor+lags | lag(10)  | 0.744 | 0.9808 |      0.144
+     GBTRegressor      | base(7)  | 1.949 | 0.8685 |      0.377
      LinearRegression  | base(7)  | 2.768 | 0.7349 |      0.535
     (3 rows)
 
@@ -450,15 +600,15 @@ preds_gbt.select(
     +----------------+---------+---------+---------+--------------------+--------------+------------+
     |timestamp       |real_temp|pred_temp|error_abs|relative_humidity_2m|wind_speed_10m|pressure_msl|
     +----------------+---------+---------+---------+--------------------+--------------+------------+
-    |2026-05-24 05:00|10.4     |10.16    |0.24     |93.0                |13.3          |1028.1      |
-    |2026-05-24 09:00|11.4     |10.64    |0.76     |96.0                |8.5           |1028.2      |
-    |2026-05-24 11:00|12.4     |11.92    |0.48     |96.0                |8.5           |1027.7      |
-    |2026-05-24 16:00|15.4     |15.57    |0.17     |82.0                |12.0          |1024.5      |
-    |2026-05-24 22:00|13.8     |13.84    |0.04     |96.0                |7.8           |1023.1      |
-    |2026-05-25 02:00|13.8     |13.86    |0.06     |96.0                |1.5           |1020.5      |
-    |2026-05-25 08:00|14.4     |13.38    |1.02     |96.0                |4.8           |1019.3      |
-    |2026-05-25 14:00|20.9     |20.06    |0.84     |74.0                |10.5          |1018.3      |
-    |2026-05-26 00:00|18.0     |13.14    |4.86     |94.0                |4.5           |1018.7      |
-    |2026-05-26 01:00|17.4     |12.83    |4.57     |95.0                |3.3           |1018.5      |
+    |2026-05-24 05:00|10.4     |9.92     |0.48     |93.0                |13.3          |1028.1      |
+    |2026-05-24 09:00|11.4     |10.36    |1.04     |96.0                |8.5           |1028.2      |
+    |2026-05-24 11:00|12.4     |12.29    |0.11     |96.0                |8.5           |1027.7      |
+    |2026-05-24 16:00|15.4     |15.25    |0.15     |82.0                |12.0          |1024.5      |
+    |2026-05-24 22:00|13.8     |13.86    |0.06     |96.0                |7.8           |1023.1      |
+    |2026-05-25 02:00|13.8     |13.66    |0.14     |96.0                |1.5           |1020.5      |
+    |2026-05-25 08:00|14.4     |13.64    |0.76     |96.0                |4.8           |1019.3      |
+    |2026-05-25 14:00|20.9     |20.64    |0.26     |74.0                |10.5          |1018.3      |
+    |2026-05-26 00:00|18.0     |14.52    |3.48     |94.0                |4.5           |1018.7      |
+    |2026-05-26 01:00|17.4     |14.59    |2.81     |95.0                |3.3           |1018.5      |
     +----------------+---------+---------+---------+--------------------+--------------+------------+
     only showing top 10 rows

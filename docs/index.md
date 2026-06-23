@@ -1,6 +1,7 @@
 # Big Data Pipeline — Unidad 2
 
-Pipeline de ingesta, procesamiento en streaming y ML distribuido sobre datos meteorológicos reales.
+Pipeline de ingesta, procesamiento en streaming, ML distribuido y forecasting meteorológico.
+Metodología **CRISP-DM** aplicada end-to-end sobre datos reales de Open-Meteo.
 
 ---
 
@@ -10,11 +11,10 @@ Pipeline de ingesta, procesamiento en streaming y ML distribuido sobre datos met
 flowchart LR
     A["🌤️ Open-Meteo API\ncada 10 s"] -->|JSON| B["📨 Kafka\nweather_topic\nKRaft mode"]
     B -->|ReadStream| C["⚡ Spark\nStructured Streaming\nwatermark 10 min"]
-    C -->|foreachBatch| D[("🐘 PostgreSQL\nweather_windows")]
-    C -->|writeStream| E["📦 Parquet\nwarehouse"]
-    D --> F["📊 Grafana\n+ Prometheus"]
-    D -->|datos históricos| G["🤖 MLlib\nS9 · S10 · S11"]
-    G -->|GBT model| H["🔮 Inferencia\nStreaming"]
+    C -->|foreachBatch| D[("🐘 PostgreSQL\n5 tablas")]
+    D --> F["📊 Grafana\n3 dashboards"]
+    D -->|datos históricos| G["🤖 MLlib CRISP-DM\nS9 · S10 · S11"]
+    G -->|GBT model| H["🔮 Inferencia\nStreaming +\nForecast +1h/+24h"]
     H --> D
 
     style A fill:#0ea5e9,color:#fff
@@ -33,10 +33,10 @@ flowchart LR
 |---|--------|-----------|-----------|
 | S6 | Kafka — tópico, productor, consumidor | KRaft · kafka-python | Contrato de evento JSON validado |
 | S7 | Structured Streaming — ventanas, watermark | Spark 3.5 | Latencia p95 < 200 ms |
-| S8 | Observabilidad — métricas, alertas, costos | Prometheus · Grafana | 2 dashboards operativos |
-| S9 | ML distribuido — regresión con MLlib | VectorAssembler · GBT | R² = 0.974 con lag features |
-| S10 | Series de tiempo + inferencia streaming | PipelineModel.load | MAE stream ≈ 0.33°C |
-| S11 | Tuning distribuido — TrainValidationSplit | ParamGridBuilder | 12 experimentos, GBT campeón |
+| S8 | Observabilidad — métricas, alertas | Prometheus · Grafana | 3 dashboards operativos |
+| S9 | ML distribuido — CRISP-DM con MLlib | VectorAssembler · GBT · EDA | R² = 0.974 con lag features |
+| S10 | Series de tiempo, inferencia y forecasting | PipelineModel · Open-Meteo hourly | +1h ±0.92°C · +24h vía API |
+| S11 | Tuning distribuido — TrainValidationSplit | ParamGridBuilder · PostgreSQL | 12 experimentos, GBT campeón RMSE=1.56°C |
 
 ---
 
@@ -57,9 +57,22 @@ xychart-beta
 | GBTRegressor base | base (7) | 1.479°C | 1.029°C | 0.932 | 0.269 |
 | **GBT + lag features** | lag (10) | **0.922°C** | **0.587°C** | **0.974** | **0.167** |
 
-!!! success "Modelo campeón de producción"
-    **GBT base** (7 features, sin lags) se usa en **streaming** — compatible con datos en tiempo real sin estado.
-    **GBT + lags** es el mejor modelo batch con RMSE/σ = 0.17 (37.7% mejor que GBT base).
+!!! success "Criterio de éxito CRISP-DM: RMSE/σ < 0.4"
+    **GBT Tuned S11**: RMSE/σ = 0.283 ✅ — cumple el criterio de negocio.
+    **GBT base**: RMSE/σ = 0.269 ✅ — modelo de producción en streaming.
+    **GBT + lags**: RMSE/σ = 0.167 ✅ — mejor modelo batch (forecasting +1h).
+
+---
+
+## Forecasting
+
+!!! tip "Predicción de temperatura"
+    | Horizonte | Método | Precisión esperada |
+    |-----------|--------|-------------------|
+    | **+1 hora** | GBT+lags · lag-shift (temp actual → lag1) | ±0.92°C |
+    | **+24 horas** | GBT base · Open-Meteo /v1/forecast hourly | referencia API + corrección modelo |
+
+    Los resultados se persisten en `weather_forecast` y se visualizan en el dashboard **Forecasting** de Grafana.
 
 ---
 
@@ -73,19 +86,20 @@ xychart-beta
 === "Procesamiento"
     - **Apache Spark 3.5** Structured Streaming
     - Watermark 10 min + ventanas tumbling 5 min
-    - Sinks: PostgreSQL · Parquet · Memory
+    - Sinks: PostgreSQL (5 tablas) · Memory
 
 === "Machine Learning"
+    - **CRISP-DM** — metodología completa (6 fases) en S9–S11
     - **MLlib** — LinearRegression, GBTRegressor, Pipeline
-    - **TrainValidationSplit** — grid search distribuido
+    - **TrainValidationSplit** — grid search distribuido (12 experimentos)
     - Features: cyclic hour encoding, day_of_year, lag features
+    - **Forecasting** — +1h lag-shift · +24h Open-Meteo hourly API
 
 === "Observabilidad"
     - **Prometheus** — scrape métricas Spark cada 15 s
-    - **Grafana** — dashboard infra + dashboard ML results
-    - **Apache Superset** — BI analítico sobre PostgreSQL
+    - **Grafana** — 3 dashboards: Weather Pipeline · Métricas ML · Forecasting
+    - PostgreSQL como datasource SQL (grafana-postgresql-datasource)
 
 === "Infraestructura"
-    - Docker Compose — 5 servicios (Kafka, Spark, PG, Grafana, Superset)
-    - Jupyter PySpark notebook integrado
-    - GitHub Actions → MkDocs → GitHub Pages
+    - Docker Compose — 6 servicios (Kafka, Spark, PG, Prometheus, Grafana, Jupyter)
+    - GitHub Actions → MkDocs Material → GitHub Pages
