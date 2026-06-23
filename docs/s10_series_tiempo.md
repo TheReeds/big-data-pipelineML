@@ -253,23 +253,3 @@ memory_infer_query.stop()
 pg_infer_query.stop()
 print("Inferencia detenida")
 ```
-
-
-??? output "Salida"
-    Producer activo — 50 eventos enviados
-    parsed stream disponible del §5
-    Modelo cargado: /home/jovyan/work/models/weather_temp_model
-    Inferencia streaming activa: True
-    Esperando 35 s...
-
-    Predicciones capturadas: 3 eventos
-    +--------+---------+---------+---------+-----------+--------------------------+
-    |event_id|real_temp|pred_temp|error_abs|day_of_year|produced_at               |
-    +--------+---------+---------+---------+-----------+--------------------------+
-    |51      |20.2     |21.72    |1.52     |174.0      |2026-06-23T14:43:50.065953|
-    |52      |20.2     |21.72    |1.52     |174.0      |2026-06-23T14:44:01.121969|
-    |53      |20.2     |21.72    |1.52     |174.0      |2026-06-23T14:44:12.608827|
-    +--------+---------+---------+---------+-----------+--------------------------+
-
-    MAE en stream: 1.52 °C  (RMSE/σ referencia = 0.39)
-    Inferencia detenida

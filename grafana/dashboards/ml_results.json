@@ -1,18 +1,18 @@
 {
-  "title": "ML Pipeline — Resultados S9/S10/S11",
+  "title": "ML Pipeline \u2014 Resultados S9/S10/S11",
   "uid": "ml-results-001",
   "schemaVersion": 36,
-  "version": 1,
+  "version": 4,
   "refresh": "30s",
   "time": {
-    "from": "now-1h",
+    "from": "now-3h",
     "to": "now"
   },
   "panels": [
     {
       "id": 1,
       "type": "row",
-      "title": "Métricas del Modelo (S9 — GBT Campeón)",
+      "title": "M\u00e9tricas del Modelo Campe\u00f3n (GBT Tuned S11)",
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -22,9 +22,9 @@
       "collapsed": false
     },
     {
-      "id": 2,
+      "id": 30,
       "type": "stat",
-      "title": "RMSE Test (°C)",
+      "title": "Modelo Campe\u00f3n",
       "datasource": {
         "type": "grafana-postgresql-datasource",
         "uid": "postgres"
@@ -35,7 +35,7 @@
             "type": "grafana-postgresql-datasource",
             "uid": "postgres"
           },
-          "rawSql": "SELECT rmse FROM model_metrics ORDER BY trained_at DESC LIMIT 1",
+          "rawSql": "SELECT model_name FROM model_metrics ORDER BY trained_at DESC LIMIT 1",
           "refId": "A",
           "format": "table",
           "rawQuery": true
@@ -50,7 +50,8 @@
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "thresholds"
+            "mode": "fixed",
+            "fixedColor": "purple"
           },
           "mappings": [],
           "thresholds": {
@@ -59,19 +60,10 @@
               {
                 "color": "green",
                 "value": null
-              },
-              {
-                "color": "yellow",
-                "value": 2.0
-              },
-              {
-                "color": "red",
-                "value": 4.0
               }
             ]
           },
-          "unit": "none",
-          "decimals": 3
+          "unit": "none"
         },
         "overrides": []
       },
@@ -82,14 +74,14 @@
           ]
         },
         "orientation": "auto",
-        "textMode": "auto",
+        "textMode": "name",
         "colorMode": "background"
       }
     },
     {
-      "id": 3,
+      "id": 2,
       "type": "stat",
-      "title": "MAE Test (°C)",
+      "title": "RMSE (S11 Champion)",
       "datasource": {
         "type": "grafana-postgresql-datasource",
         "uid": "postgres"
@@ -100,7 +92,7 @@
             "type": "grafana-postgresql-datasource",
             "uid": "postgres"
           },
-          "rawSql": "SELECT mae FROM model_metrics ORDER BY trained_at DESC LIMIT 1",
+          "rawSql": "SELECT rmse FROM model_metrics ORDER BY trained_at DESC LIMIT 1",
           "refId": "A",
           "format": "table",
           "rawQuery": true
@@ -152,9 +144,74 @@
       }
     },
     {
+      "id": 3,
+      "type": "stat",
+      "title": "MAE (S11 Champion)",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "postgres"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "postgres"
+          },
+          "rawSql": "SELECT mae FROM model_metrics ORDER BY trained_at DESC LIMIT 1",
+          "refId": "A",
+          "format": "table",
+          "rawQuery": true
+        }
+      ],
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 8,
+        "y": 1
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 2.0
+              },
+              {
+                "color": "red",
+                "value": 4.0
+              }
+            ]
+          },
+          "unit": "none",
+          "decimals": 3
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "background"
+      }
+    },
+    {
       "id": 4,
       "type": "stat",
-      "title": "R² Test",
+      "title": "R\u00b2 (S11 Champion)",
       "datasource": {
         "type": "grafana-postgresql-datasource",
         "uid": "postgres"
@@ -174,7 +231,7 @@
       "gridPos": {
         "h": 4,
         "w": 4,
-        "x": 8,
+        "x": 12,
         "y": 1
       },
       "fieldConfig": {
@@ -219,7 +276,7 @@
     {
       "id": 5,
       "type": "stat",
-      "title": "RMSE/σ",
+      "title": "RMSE/\u03c3 (S11 Champion)",
       "datasource": {
         "type": "grafana-postgresql-datasource",
         "uid": "postgres"
@@ -239,7 +296,7 @@
       "gridPos": {
         "h": 4,
         "w": 4,
-        "x": 12,
+        "x": 16,
         "y": 1
       },
       "fieldConfig": {
@@ -284,7 +341,7 @@
     {
       "id": 6,
       "type": "stat",
-      "title": "Mejora vs LR (%)",
+      "title": "Mejora GBT vs LR (%)",
       "datasource": {
         "type": "grafana-postgresql-datasource",
         "uid": "postgres"
@@ -304,7 +361,7 @@
       "gridPos": {
         "h": 4,
         "w": 4,
-        "x": 16,
+        "x": 20,
         "y": 1
       },
       "fieldConfig": {
@@ -400,6 +457,127 @@
       "collapsed": false
     },
     {
+      "id": 33,
+      "type": "stat",
+      "title": "\u00daltimo Error Abs. Medio (Stream)",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "postgres"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "postgres"
+          },
+          "rawSql": "SELECT ROUND(AVG(error_abs)::numeric, 3) AS mae FROM temp_predictions WHERE produced_at > NOW() - INTERVAL '5 minutes'",
+          "refId": "A",
+          "format": "table",
+          "rawQuery": true
+        }
+      ],
+      "gridPos": {
+        "h": 3,
+        "w": 6,
+        "x": 18,
+        "y": 12
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 1.0
+              },
+              {
+                "color": "red",
+                "value": 2.0
+              }
+            ]
+          },
+          "unit": "celsius",
+          "decimals": 3
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "background"
+      }
+    },
+    {
+      "id": 32,
+      "type": "stat",
+      "title": "Predicciones en Stream (totales)",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "postgres"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "postgres"
+          },
+          "rawSql": "SELECT COUNT(*) AS n FROM temp_predictions",
+          "refId": "A",
+          "format": "table",
+          "rawQuery": true
+        }
+      ],
+      "gridPos": {
+        "h": 3,
+        "w": 6,
+        "x": 12,
+        "y": 12
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "background"
+      }
+    },
+    {
       "id": 11,
       "type": "timeseries",
       "title": "Temperatura Real vs Predicha (Stream)",
@@ -413,7 +591,7 @@
             "type": "grafana-postgresql-datasource",
             "uid": "postgres"
           },
-          "rawSql": "\nSELECT\n  produced_at AS \"time\",\n  real_temp   AS \"Real (°C)\",\n  pred_temp   AS \"Predicho (°C)\"\nFROM temp_predictions\nWHERE $__timeFilter(produced_at)\nORDER BY produced_at\n",
+          "rawSql": "\nSELECT\n  produced_at AS \"time\",\n  real_temp   AS \"Real (\u00b0C)\",\n  pred_temp   AS \"Predicho (\u00b0C)\"\nFROM temp_predictions\nWHERE $__timeFilter(produced_at)\nORDER BY produced_at\n",
           "refId": "A",
           "format": "time_series",
           "rawQuery": true
@@ -421,7 +599,7 @@
       ],
       "gridPos": {
         "h": 8,
-        "w": 16,
+        "w": 12,
         "x": 0,
         "y": 12
       },
@@ -436,7 +614,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Predicho (°C)"
+              "options": "Predicho (\u00b0C)"
             },
             "properties": [
               {
@@ -466,7 +644,7 @@
     {
       "id": 12,
       "type": "timeseries",
-      "title": "Error Absoluto de Predicción (°C)",
+      "title": "Error Absoluto de Predicci\u00f3n (\u00b0C)",
       "datasource": {
         "type": "grafana-postgresql-datasource",
         "uid": "postgres"
@@ -477,17 +655,17 @@
             "type": "grafana-postgresql-datasource",
             "uid": "postgres"
           },
-          "rawSql": "\nSELECT produced_at AS \"time\", error_abs AS \"Error Abs (°C)\"\nFROM temp_predictions\nWHERE $__timeFilter(produced_at)\nORDER BY produced_at\n",
+          "rawSql": "\nSELECT produced_at AS \"time\", error_abs AS \"Error Abs (\u00b0C)\"\nFROM temp_predictions\nWHERE $__timeFilter(produced_at)\nORDER BY produced_at\n",
           "refId": "A",
           "format": "time_series",
           "rawQuery": true
         }
       ],
       "gridPos": {
-        "h": 8,
-        "w": 8,
-        "x": 16,
-        "y": 12
+        "h": 5,
+        "w": 12,
+        "x": 12,
+        "y": 15
       },
       "fieldConfig": {
         "defaults": {
@@ -525,7 +703,7 @@
     {
       "id": 20,
       "type": "row",
-      "title": "Temperatura por Ventana Spark (S7 + comparación ML)",
+      "title": "Temperatura por Ventana Spark (S7 + comparaci\u00f3n ML)",
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -537,7 +715,7 @@
     {
       "id": 21,
       "type": "timeseries",
-      "title": "Temperatura Avg por Ventana (Spark → PostgreSQL)",
+      "title": "Temperatura Avg por Ventana (Spark \u2192 PostgreSQL)",
       "datasource": {
         "type": "grafana-postgresql-datasource",
         "uid": "postgres"
@@ -548,7 +726,7 @@
             "type": "grafana-postgresql-datasource",
             "uid": "postgres"
           },
-          "rawSql": "\nSELECT window_start AS \"time\", avg_temp AS \"Avg Temp (°C)\",\n       min_temp AS \"Min Temp (°C)\", max_temp AS \"Max Temp (°C)\"\nFROM weather_windows\nWHERE $__timeFilter(window_start)\nORDER BY window_start\n",
+          "rawSql": "\nSELECT window_start AS \"time\", avg_temp AS \"Avg Temp (\u00b0C)\",\n       min_temp AS \"Min Temp (\u00b0C)\", max_temp AS \"Max Temp (\u00b0C)\"\nFROM weather_windows\nWHERE $__timeFilter(window_start)\nORDER BY window_start\n",
           "refId": "A",
           "format": "time_series",
           "rawQuery": true
@@ -574,6 +752,47 @@
           "displayMode": "list",
           "placement": "bottom"
         }
+      }
+    },
+    {
+      "id": 31,
+      "type": "table",
+      "title": "Grid Search S11 \u2014 12 Experimentos (TrainValidationSplit)",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "postgres"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "postgres"
+          },
+          "rawSql": "SELECT modelo, regParam, elasticNetParam, maxDepth, maxIter, ROUND(val_RMSE::numeric,4) AS val_rmse FROM s11_experiments ORDER BY val_RMSE ASC",
+          "refId": "A",
+          "format": "table",
+          "rawQuery": true
+        }
+      ],
+      "gridPos": {
+        "h": 6,
+        "w": 24,
+        "x": 0,
+        "y": 29
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "footer": {
+          "show": false
+        },
+        "showHeader": true
       }
     }
   ],

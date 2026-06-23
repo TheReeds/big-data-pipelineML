@@ -84,7 +84,7 @@ print(f"  value:     {json.dumps(example_event, indent=10)}")
 
 
 ??? output "Salida"
-    Topic 'weather_topic' creado
+    Topic 'weather_topic' ya existe
     Topics disponibles: ['weather_topic']
 
     === Ejemplo de mensaje (contrato de evento) ===
@@ -113,7 +113,7 @@ for line in _producer_log[-8:]:
 
 ??? output "Salida"
     Producer vivo: True | Eventos enviados: 1
-      [#  1] offset=  83 | temp=20.1°C | wind=5.1 km/h | at=2026-06-22T04:01:34
+      [#  1] offset=  80 | temp=20.0°C | wind=15.7 km/h | at=2026-06-23T14:59:55
 
 
 ## 5. Spark Structured Streaming — ReadStream desde Kafka (S6 + S7)
