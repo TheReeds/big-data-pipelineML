@@ -92,37 +92,37 @@ print(f"Desv. estándar global:     {df_hist['temperature_2m'].std():.2f} °C")
     === S10 — Patrones Horarios (serie histórica 30 días) ===
           avg_temp  std_temp  min_temp  max_temp
     hour                                        
-    0.0      20.36      4.36      10.8      28.2
-    1.0      19.94      4.27      10.8      27.8
-    2.0      19.29      4.28      10.0      26.5
-    3.0      18.67      4.20       9.8      26.0
-    4.0      18.17      4.07       9.7      25.0
-    5.0      17.70      3.99       9.4      24.4
-    6.0      17.40      3.96       9.6      24.1
-    7.0      18.22      3.97      10.6      24.9
-    8.0      19.75      4.06      11.1      26.4
-    9.0      21.46      4.27      11.4      28.2
-    10.0     22.87      4.52      12.0      29.3
-    11.0     24.11      4.85      12.4      30.9
-    12.0     25.12      5.06      12.4      31.9
-    13.0     25.98      5.45      12.0      33.7
-    14.0     26.24      5.63      11.6      35.4
-    15.0     26.37      5.51      11.9      33.7
-    16.0     26.39      5.40      11.4      34.2
-    17.0     26.08      5.36      11.1      34.6
-    18.0     25.13      4.95      10.6      32.2
-    19.0     23.91      4.64      10.4      31.5
-    20.0     23.32      4.77      10.6      32.7
-    21.0     22.17      4.74      10.4      32.3
-    22.0     21.52      4.70      10.4      32.0
-    23.0     20.85      4.41      10.5      28.5
+    0.0      20.78      4.02      11.6      28.2
+    1.0      20.31      3.94      11.3      27.8
+    2.0      19.64      3.97      10.0      26.5
+    3.0      18.92      4.10       9.8      26.0
+    4.0      18.43      3.99       9.7      25.0
+    5.0      17.97      3.93       9.4      24.4
+    6.0      17.71      3.91       9.6      24.1
+    7.0      18.55      3.87      10.6      24.9
+    8.0      20.05      3.88      11.1      26.4
+    9.0      21.76      3.96      11.4      28.2
+    10.0     23.21      4.11      12.0      29.3
+    11.0     24.44      4.36      12.4      30.9
+    12.0     25.43      4.53      13.1      31.9
+    13.0     26.32      4.86      13.7      33.7
+    14.0     26.59      5.00      14.1      35.4
+    15.0     26.68      4.91      14.9      33.7
+    16.0     26.68      4.77      15.4      34.2
+    17.0     26.38      4.71      15.2      34.6
+    18.0     25.49      4.22      15.2      32.2
+    19.0     24.28      3.95      14.8      31.5
+    20.0     23.74      4.18      13.9      32.7
+    21.0     22.62      4.26      13.1      32.3
+    22.0     21.95      4.29      11.9      32.0
+    23.0     21.25      4.05      11.6      28.5
 
-    Hora más cálida: 16:00 (26.39 °C avg)
-    Hora más fría:   06:00 (17.4 °C avg)
-    Autocorrelación lag-24h: 0.7390  (≥0.7 confirma ciclo diario)
+    Hora más cálida: 15:00 (26.68 °C avg)
+    Hora más fría:   06:00 (17.71 °C avg)
+    Autocorrelación lag-24h: 0.7079  (≥0.7 confirma ciclo diario)
 
     Rango temperatura dataset: 9.4 – 35.4 °C
-    Desv. estándar global:     5.51 °C
+    Desv. estándar global:     5.17 °C
 
 
 ```python
@@ -191,22 +191,10 @@ for q in spark.streams.active:
         q.stop()
         print("Query previa detenida")
 
-# Función foreachBatch: memory sink + persistencia en PostgreSQL
+# Función foreachBatch: persistencia en PostgreSQL
 def save_predictions(df, epoch_id):
     if df.count() == 0:
         return
-    # a) guardar en memoria para spark.sql()
-    df.createOrReplaceTempView("temp_predictions_batch")
-    spark.sql("""
-        CREATE TABLE IF NOT EXISTS temp_predictions
-        USING memory AS SELECT * FROM temp_predictions_batch LIMIT 0
-    """) if epoch_id == 0 else None
-    spark.sql("""
-        INSERT INTO temp_predictions
-        SELECT * FROM temp_predictions_batch
-    """) if False else None   # memory append se gestiona vía writeStream format memory
-
-    # b) guardar en PostgreSQL para Grafana
     pg_df = df.withColumn("produced_at", F.col("produced_at").cast("timestamp"))
     try:
         pg_df.write.mode("append").jdbc(
@@ -216,24 +204,34 @@ def save_predictions(df, epoch_id):
     except Exception as e:
         print(f"  [PG write] {e}")
 
-infer_query = (
-    predicted_stream.select(
-        "event_id",
-        F.round("temperature_2m", 2).alias("real_temp"),
-        F.round("prediction",     2).alias("pred_temp"),
-        F.round(F.abs(F.col("prediction") - F.col("temperature_2m")), 2).alias("error_abs"),
-        "day_of_year",
-        "produced_at",
-    )
-    .writeStream
-    .foreachBatch(save_predictions)
+infer_cols = predicted_stream.select(
+    "event_id",
+    F.round("temperature_2m", 2).alias("real_temp"),
+    F.round("prediction",     2).alias("pred_temp"),
+    F.round(F.abs(F.col("prediction") - F.col("temperature_2m")), 2).alias("error_abs"),
+    "day_of_year",
+    "produced_at",
+)
+
+# Sink 1 — Memory (para spark.sql interactivo)
+memory_infer_query = (
+    infer_cols.writeStream
+    .format("memory")
     .queryName("temp_predictions")
+    .trigger(processingTime="10 seconds")
+    .start()
+)
+
+# Sink 2 — PostgreSQL (para Grafana)
+pg_infer_query = (
+    infer_cols.writeStream
+    .foreachBatch(save_predictions)
     .trigger(processingTime="10 seconds")
     .option("checkpointLocation", "/home/jovyan/checkpoint/inference")
     .start()
 )
 
-print(f"Inferencia streaming activa: {infer_query.isActive}")
+print(f"Inferencia streaming activa: {memory_infer_query.isActive}")
 print("Esperando 35 s...")
 time.sleep(35)
 
@@ -251,22 +249,27 @@ try:
 except Exception as e:
     print(f"  Query error: {e}")
 
-infer_query.stop()
+memory_infer_query.stop()
+pg_infer_query.stop()
 print("Inferencia detenida")
 ```
 
 
 ??? output "Salida"
-    Producer activo — 8 eventos enviados
+    Producer activo — 50 eventos enviados
     parsed stream disponible del §5
     Modelo cargado: /home/jovyan/work/models/weather_temp_model
     Inferencia streaming activa: True
     Esperando 35 s...
-      Query error: [TABLE_OR_VIEW_NOT_FOUND] The table or view `temp_predictions` cannot be found. Verify the spelling and correctness of the schema and catalog.
-    If you did not qualify the name with a schema, verify the current_schema() output, or qualify the name with the correct schema and catalog.
-    To tolerate the error on drop use DROP VIEW IF EXISTS or DROP TABLE IF EXISTS.; line 1 pos 14;
-    'Sort ['event_id ASC NULLS FIRST], true
-    +- 'Project [*]
-       +- 'UnresolvedRelation [temp_predictions], [], false
 
+    Predicciones capturadas: 3 eventos
+    +--------+---------+---------+---------+-----------+--------------------------+
+    |event_id|real_temp|pred_temp|error_abs|day_of_year|produced_at               |
+    +--------+---------+---------+---------+-----------+--------------------------+
+    |51      |20.2     |21.72    |1.52     |174.0      |2026-06-23T14:43:50.065953|
+    |52      |20.2     |21.72    |1.52     |174.0      |2026-06-23T14:44:01.121969|
+    |53      |20.2     |21.72    |1.52     |174.0      |2026-06-23T14:44:12.608827|
+    +--------+---------+---------+---------+-----------+--------------------------+
+
+    MAE en stream: 1.52 °C  (RMSE/σ referencia = 0.39)
     Inferencia detenida

@@ -129,23 +129,23 @@ df_hist.head(3)
 
 
 ??? output "Salida"
-    Dataset histórico NYC: 741 registros (2026-05-23 → 2026-06-22)
+    Dataset histórico NYC: 741 registros (2026-05-24 → 2026-06-23)
     Rango temperatura: 9.4 – 35.4 °C
     Features disponibles: ['timestamp', 'temperature_2m', 'relative_humidity_2m', 'wind_speed_10m', 'pressure_msl', 'weather_code', 'hour', 'day_of_year', 'hour_sin', 'hour_cos', 'temp_lag1', 'temp_lag2', 'temp_lag3']
                 timestamp  temperature_2m  relative_humidity_2m  wind_speed_10m  \
-    0 2026-05-23 03:00:00            13.3                    54             4.8   
-    1 2026-05-23 04:00:00            13.1                    55             4.7   
-    2 2026-05-23 05:00:00            12.8                    54             6.3   
+    0 2026-05-24 03:00:00            10.4                    92            13.8   
+    1 2026-05-24 04:00:00            10.3                    93            13.5   
+    2 2026-05-24 05:00:00            10.4                    93            13.3   
 
        pressure_msl  weather_code  hour  day_of_year  hour_sin  hour_cos  \
-    0        1029.3             3     3          143  0.707107  0.707107   
-    1        1029.5             3     4          143  0.866025  0.500000   
-    2        1029.6             3     5          143  0.965926  0.258819   
+    0        1029.1            63     3          144  0.707107  0.707107   
+    1        1028.6            61     4          144  0.866025  0.500000   
+    2        1028.1            61     5          144  0.965926  0.258819   
 
        temp_lag1  temp_lag2  temp_lag3  
-    0       13.4       13.4       13.6  
-    1       13.3       13.4       13.4  
-    2       13.1       13.3       13.4
+    0       10.6       10.8       10.8  
+    1       10.4       10.6       10.8  
+    2       10.3       10.4       10.6
 
 
 ```python
@@ -242,9 +242,9 @@ print("Coeficientes:", coefs)
 
 ??? output "Salida"
     Entrenando LinearRegression (base)...
-    LinearRegression — RMSE: 2.965 °C | MAE: 2.435 °C | R²: 0.7262
-    Intercepto: 22.265
-    Coeficientes: {'relative_humidity_2m': -2.0289, 'wind_speed_10m': -1.231, 'pressure_msl': -2.7702, 'weather_code': 0.2366, 'hour_sin': -1.8205, 'hour_cos': -1.2152, 'day_of_year': 0.715}
+    LinearRegression — RMSE: 2.768 °C | MAE: 2.276 °C | R²: 0.7349
+    Intercepto: 22.556
+    Coeficientes: {'relative_humidity_2m': -2.1778, 'wind_speed_10m': -1.3686, 'pressure_msl': -2.3973, 'weather_code': 0.3164, 'hour_sin': -1.6976, 'hour_cos': -1.2737, 'day_of_year': 0.6338}
 
 
 ```python
@@ -286,8 +286,8 @@ print(f"\nModelo base guardado en {MODEL_PATH}")
 
 ??? output "Salida"
     Entrenando GBTRegressor (base — sin lags)...
-    GBTRegressor (base) — RMSE: 1.479 °C | MAE: 1.029 °C | R²: 0.9319
-      σ global dataset = 5.51 °C  →  RMSE/σ = 0.27  (aceptable (<0.6))
+    GBTRegressor (base) — RMSE: 2.019 °C | MAE: 1.276 °C | R²: 0.8590
+      σ global dataset = 5.17 °C  →  RMSE/σ = 0.39  (aceptable (<0.6))
 
     Modelo base guardado en /home/jovyan/work/models/weather_temp_model
 
@@ -347,17 +347,17 @@ print(results_s9.to_string(index=False))
 ??? output "Salida"
     === S9 Enhanced — GBTRegressor con lag features ===
     Entrenando GBT con lags...
-    GBT base  (7 features) — RMSE: 1.479 °C | R²: 0.9319 | RMSE/σ = 0.27
-    GBT + lag (10 features)— RMSE: 0.922 °C | R²: 0.9735 | RMSE/σ = 0.17
+    GBT base  (7 features) — RMSE: 2.019 °C | R²: 0.8590 | RMSE/σ = 0.39
+    GBT + lag (10 features)— RMSE: 0.726 °C | R²: 0.9817 | RMSE/σ = 0.14
 
-    Mejora con lags: ΔRMSE = -0.557 °C (37.7% mejor)
-                     ΔR²   = +0.0417
+    Mejora con lags: ΔRMSE = -1.292 °C (64.0% mejor)
+                     ΔR²   = +0.1228
 
     === S9 — Tabla Comparativa Final ===
                Modelo Features  RMSE   MAE     R²  RMSE/σ
-     LinearRegression  base(7) 2.965 2.435 0.7262    0.54
-         GBTRegressor  base(7) 1.479 1.029 0.9319    0.27
-    GBTRegressor+lags  lag(10) 0.922 0.587 0.9735    0.17
+     LinearRegression  base(7) 2.768 2.276 0.7349    0.53
+         GBTRegressor  base(7) 2.019 1.276 0.8590    0.39
+    GBTRegressor+lags  lag(10) 0.726 0.568 0.9817    0.14
 
 
 ```python
@@ -426,9 +426,9 @@ print(result.stdout)
     Tablas model_metrics y temp_predictions listas
         model_name     | features | rmse  |   r2   | rmse_sigma 
     -------------------+----------+-------+--------+------------
-     GBTRegressor+lags | lag(10)  | 0.922 | 0.9735 |      0.167
-     GBTRegressor      | base(7)  | 1.479 | 0.9319 |      0.269
-     LinearRegression  | base(7)  | 2.965 | 0.7262 |      0.538
+     GBTRegressor+lags | lag(10)  | 0.727 | 0.9817 |      0.140
+     GBTRegressor      | base(7)  | 2.019 | 0.8590 |      0.390
+     LinearRegression  | base(7)  | 2.768 | 0.7349 |      0.535
     (3 rows)
 
 
@@ -450,15 +450,15 @@ preds_gbt.select(
     +----------------+---------+---------+---------+--------------------+--------------+------------+
     |timestamp       |real_temp|pred_temp|error_abs|relative_humidity_2m|wind_speed_10m|pressure_msl|
     +----------------+---------+---------+---------+--------------------+--------------+------------+
-    |2026-05-23 05:00|12.8     |12.45    |0.35     |54.0                |6.3           |1029.6      |
-    |2026-05-23 09:00|13.0     |12.62    |0.38     |55.0                |7.6           |1031.6      |
-    |2026-05-23 11:00|12.5     |12.12    |0.38     |63.0                |10.1          |1031.6      |
-    |2026-05-23 16:00|11.4     |11.07    |0.33     |79.0                |8.7           |1032.2      |
-    |2026-05-23 22:00|10.4     |10.36    |0.04     |94.0                |10.7          |1031.5      |
-    |2026-05-24 02:00|10.6     |11.23    |0.63     |92.0                |13.0          |1029.8      |
-    |2026-05-24 08:00|11.1     |10.69    |0.41     |96.0                |10.5          |1028.5      |
-    |2026-05-24 14:00|14.1     |12.0     |2.1      |85.0                |15.0          |1025.7      |
-    |2026-05-25 00:00|13.8     |19.14    |5.34     |97.0                |5.1           |1021.9      |
-    |2026-05-25 01:00|13.8     |18.22    |4.42     |97.0                |3.5           |1021.0      |
+    |2026-05-24 05:00|10.4     |10.16    |0.24     |93.0                |13.3          |1028.1      |
+    |2026-05-24 09:00|11.4     |10.64    |0.76     |96.0                |8.5           |1028.2      |
+    |2026-05-24 11:00|12.4     |11.92    |0.48     |96.0                |8.5           |1027.7      |
+    |2026-05-24 16:00|15.4     |15.57    |0.17     |82.0                |12.0          |1024.5      |
+    |2026-05-24 22:00|13.8     |13.84    |0.04     |96.0                |7.8           |1023.1      |
+    |2026-05-25 02:00|13.8     |13.86    |0.06     |96.0                |1.5           |1020.5      |
+    |2026-05-25 08:00|14.4     |13.38    |1.02     |96.0                |4.8           |1019.3      |
+    |2026-05-25 14:00|20.9     |20.06    |0.84     |74.0                |10.5          |1018.3      |
+    |2026-05-26 00:00|18.0     |13.14    |4.86     |94.0                |4.5           |1018.7      |
+    |2026-05-26 01:00|17.4     |12.83    |4.57     |95.0                |3.3           |1018.5      |
     +----------------+---------+---------+---------+--------------------+--------------+------------+
     only showing top 10 rows
