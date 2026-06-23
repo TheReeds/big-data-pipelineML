@@ -667,15 +667,15 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#13-s9-ml-distribuido-con-mllib-regresion-de-temperatura" class="md-nav__link">
+  <a href="#13-s9s11-ml-distribuido-con-mllib-marco-crisp-dm" class="md-nav__link">
     <span class="md-ellipsis">
       
-        13. S9 — ML Distribuido con MLlib: Regresión de Temperatura
+        13. S9–S11 — ML Distribuido con MLlib (marco CRISP-DM)
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="13. S9 — ML Distribuido con MLlib: Regresión de Temperatura">
+    <nav class="md-nav" aria-label="13. S9–S11 — ML Distribuido con MLlib (marco CRISP-DM)">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -793,15 +793,15 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#13-s9-ml-distribuido-con-mllib-regresion-de-temperatura" class="md-nav__link">
+  <a href="#13-s9s11-ml-distribuido-con-mllib-marco-crisp-dm" class="md-nav__link">
     <span class="md-ellipsis">
       
-        13. S9 — ML Distribuido con MLlib: Regresión de Temperatura
+        13. S9–S11 — ML Distribuido con MLlib (marco CRISP-DM)
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="13. S9 — ML Distribuido con MLlib: Regresión de Temperatura">
+    <nav class="md-nav" aria-label="13. S9–S11 — ML Distribuido con MLlib (marco CRISP-DM)">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -919,44 +919,49 @@ Inference"]
 </div>
 <hr />
 <hr />
-<h2 id="13-s9-ml-distribuido-con-mllib-regresion-de-temperatura">13. S9 — ML Distribuido con MLlib: Regresión de Temperatura<a class="headerlink" href="#13-s9-ml-distribuido-con-mllib-regresion-de-temperatura" title="Permanent link">&para;</a></h2>
-<p><strong>Objetivo:</strong> entrenar un modelo de regresión en Spark MLlib que prediga<br />
-<code>temperature_2m</code> a partir de variables meteorológicas.</p>
+<h2 id="13-s9s11-ml-distribuido-con-mllib-marco-crisp-dm">13. S9–S11 — ML Distribuido con MLlib (marco CRISP-DM)<a class="headerlink" href="#13-s9s11-ml-distribuido-con-mllib-marco-crisp-dm" title="Permanent link">&para;</a></h2>
+<p><strong>Objetivo:</strong> entrenar un modelo de regresión de temperatura en Spark MLlib,
+aplicarlo sobre el stream de Kafka en tiempo real (S10) y optimizarlo con
+búsqueda distribuida de hiperparámetros (S11).</p>
+<p>Este bloque sigue la metodología <strong>CRISP-DM</strong> (Cross-Industry Standard Process for Data Mining):</p>
 <table>
 <thead>
 <tr>
-<th>Paso</th>
+<th>Fase</th>
 <th>Descripción</th>
+<th>Sección</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Dataset</td>
-<td>30 días de datos horarios reales de NYC vía Open-Meteo historical API</td>
+<td><strong>1. Business Understanding</strong></td>
+<td>Problema, objetivo de negocio, criterios de éxito</td>
+<td>§13.1</td>
 </tr>
 <tr>
-<td>Features base</td>
-<td><code>relative_humidity_2m</code>, <code>wind_speed_10m</code>, <code>pressure_msl</code>, <code>weather_code</code>, <code>hour_sin</code>, <code>hour_cos</code>, <strong><code>day_of_year</code></strong></td>
+<td><strong>2. Data Understanding</strong></td>
+<td>EDA: distribuciones, correlaciones, patrones temporales</td>
+<td>§13.2</td>
 </tr>
 <tr>
-<td>Features enhanced</td>
-<td>base + <code>temp_lag1</code>, <code>temp_lag2</code>, <code>temp_lag3</code> (modelo batch, no streaming)</td>
+<td><strong>3. Data Preparation</strong></td>
+<td>Feature engineering: cyclic encoding, day_of_year, lag features</td>
+<td>§13.3</td>
 </tr>
 <tr>
-<td>Target</td>
-<td><code>temperature_2m</code></td>
+<td><strong>4. Modeling</strong></td>
+<td>LR baseline → GBT → GBT+lags → Tuning S11</td>
+<td>§13.4 – §15</td>
 </tr>
 <tr>
-<td>Split</td>
-<td>80/20 aleatorio (seed=42)</td>
+<td><strong>5. Evaluation</strong></td>
+<td>RMSE, MAE, R², RMSE/σ — tabla comparativa de 4 modelos</td>
+<td>§13.4, §15</td>
 </tr>
 <tr>
-<td>Modelos</td>
-<td><code>LinearRegression</code> + <code>GBTRegressor</code> baseline y con lags</td>
-</tr>
-<tr>
-<td>Métricas</td>
-<td>RMSE, MAE, R²</td>
+<td><strong>6. Deployment</strong></td>
+<td>Modelo serializado → inferencia en streaming Kafka (S10)</td>
+<td>§14, §15</td>
 </tr>
 </tbody>
 </table>
