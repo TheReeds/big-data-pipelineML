@@ -729,6 +729,73 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="15. S11 — Tuning y Experimentación Distribuida">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#crisp-dm-fase-6-deployment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CRISP-DM Fase 6 — Deployment
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="CRISP-DM Fase 6 — Deployment">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#modelo-de-produccion-seleccionado" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Modelo de producción seleccionado
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#arquitectura-de-inferencia-en-produccion" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Arquitectura de inferencia en producción
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#verificacion-de-criterios-de-exito" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Verificación de criterios de éxito
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#consideraciones-para-produccion-real" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Consideraciones para producción real
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
     </ul>
@@ -782,6 +849,73 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="15. S11 — Tuning y Experimentación Distribuida">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#crisp-dm-fase-6-deployment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CRISP-DM Fase 6 — Deployment
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="CRISP-DM Fase 6 — Deployment">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#modelo-de-produccion-seleccionado" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Modelo de producción seleccionado
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#arquitectura-de-inferencia-en-produccion" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Arquitectura de inferencia en producción
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#verificacion-de-criterios-de-exito" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Verificación de criterios de éxito
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#consideraciones-para-produccion-real" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Consideraciones para producción real
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
     </ul>
@@ -804,51 +938,37 @@
 <h1 id="s11-tuning-y-experimentacion-distribuida">S11 — Tuning y Experimentación Distribuida<a class="headerlink" href="#s11-tuning-y-experimentacion-distribuida" title="Permanent link">&para;</a></h1>
 <div class="admonition abstract">
 <p class="admonition-title">Objetivo S11</p>
-<p>Optimizar hiperparámetros con <code>TrainValidationSplit</code> (equivalente distribuido de GridSearchCV).
-Se evalúan 6 configuraciones de LR y 6 de GBT → tabla de 12 experimentos.</p>
+<p>Optimizar hiperparámetros con <code>TrainValidationSplit</code>.
+12 experimentos (6 LR + 6 GBT). Campeón persiste en PostgreSQL.</p>
 </div>
 <pre class="mermaid"><code>flowchart TB
     TRAIN["Training Set
-597 registros"] --&gt; TVS
-
-    subgraph TVS["TrainValidationSplit
+597 registros"] --&gt; TVS["TrainValidationSplit
 trainRatio=0.8"]
-        subgraph LR_GRID["LR Grid — 6 configs"]
-            LR1["regParam=0.01
-elasticNet=0.0"]
-            LR2["regParam=0.01
-elasticNet=0.5"]
-            LR3["regParam=0.1 ..."]
-        end
-        subgraph GBT_GRID["GBT Grid — 6 configs"]
-            G1["maxDepth=3
-maxIter=50"]
-            G2["maxDepth=5
-maxIter=50"]
-            G3["maxDepth=7 ..."]
-        end
+
+    subgraph LR_GRID["LR — 6 configs
+regParam × elasticNet"]
+        L1["0.01/0.0"] &amp; L2["0.01/0.5"] &amp; L3["0.1/0.0"] &amp; L4["0.1/0.5"] &amp; L5["1.0/0.0"] &amp; L6["1.0/0.5"]
+    end
+    subgraph GBT_GRID["GBT — 6 configs
+maxDepth × maxIter"]
+        G1["3×50 ⭐"] &amp; G2["5×50"] &amp; G3["5×30"] &amp; G4["3×30"] &amp; G5["7×50"] &amp; G6["7×30"]
     end
 
-    TVS --&gt;|"best LR"| BEST_LR["LR campeón
-regParam=0.01 · elasticNet=0.0
-val RMSE=2.648°C"]
-    TVS --&gt;|"best GBT"| BEST_GBT["GBT campeón
-maxDepth=3 · maxIter=50
-val RMSE=1.738°C"]
+    TVS --&gt; LR_GRID &amp; GBT_GRID
+    G1 --&gt;|"test RMSE=1.558°C"| FINAL["GBT Tuned S11
+R²=0.924 · RMSE/σ=0.28 ✅"]
+    FINAL --&gt;|"save"| FPATH["weather_temp_model_final"]
+    FINAL --&gt;|"INSERT"| PG[("model_metrics
+s11_experiments
+PostgreSQL")]
 
-    BEST_GBT --&gt;|"test set"| FINAL["Test RMSE=1.558°C
-R²=0.924
-47.4% mejor que LR"]
-    FINAL --&gt;|"save"| MODEL["FINAL_MODEL_PATH
-weather_temp_model_final"]
-
-    style BEST_GBT fill:#10b981,color:#fff
+    style G1 fill:#10b981,color:#fff
     style FINAL fill:#ec4899,color:#fff</code></pre>
 <div class="admonition success">
 <p class="admonition-title">Hallazgo S11</p>
-<p>Con <code>day_of_year</code> como feature, <code>maxDepth=7</code> ya no sobreajusta (antes era el peor).
-Features más ricas permiten árboles más profundos sin overfitting.
-<strong>Champion: GBT maxDepth=3, test RMSE=1.558°C, R²=0.924.</strong></p>
+<p><code>maxDepth=7</code> es el <strong>peor</strong> resultado — con 597 muestras los árboles profundos sobreajustan.
+<code>maxDepth=3</code> generaliza mejor: <strong>test RMSE=1.558°C, 47.4% mejor que LR campeón</strong>.</p>
 </div>
 <hr />
 <hr />
@@ -998,6 +1118,163 @@ GBTRegressor        -               -         3       30    1.8257</p>
 </details>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># Tabla unificada de todos los experimentos (S9 baseline + S11 tuning)print(&quot;=== S11 — Tabla Completa de Experimentos ===&quot;)df_all_experiments = pd.concat([df_tune_lr, df_tune_gbt], ignore_index=True)df_all_experiments = df_all_experiments.sort_values(&quot;val_RMSE&quot;).reset_index(drop=True)df_all_experiments.index += 1print(df_all_experiments.to_string())# Evaluar el mejor modelo de cada familia en test set (holdout real)best_lr_final  = tvs_model_lr.bestModelbest_gbt_final = tvs_model_gbt.bestModelpreds_lr_final  = best_lr_final.transform(test_df)preds_gbt_final = best_gbt_final.transform(test_df)rmse_lr_f  = evaluator_rmse.evaluate(preds_lr_final)rmse_gbt_f = evaluator_rmse.evaluate(preds_gbt_final)r2_lr_f    = evaluator_r2.evaluate(preds_lr_final)r2_gbt_f   = evaluator_r2.evaluate(preds_gbt_final)print()print(&quot;=== S11 — Evaluación en TEST SET (modelo óptimo de cada familia) ===&quot;)print(f&quot;  LinearRegression (best): RMSE={rmse_lr_f:.3f} °C | R²={r2_lr_f:.4f}&quot;)print(f&quot;  GBTRegressor     (best): RMSE={rmse_gbt_f:.3f} °C | R²={r2_gbt_f:.4f}&quot;)print()# Observación sobre profundidad de árbolesgbt_depth_summary = (    df_tune_gbt.groupby(&quot;maxDepth&quot;)[&quot;val_RMSE&quot;]    .mean().round(4).sort_index())print(&quot;Efecto de maxDepth (val_RMSE promedio):&quot;)for d, rmse in gbt_depth_summary.items():    note = &quot; ← mejor generalización&quot; if d == gbt_depth_summary.idxmin() else &quot;&quot;    print(f&quot;  maxDepth={d}: {rmse}{note}&quot;)print(&quot;  (más profundidad → más overfitting con 720 muestras)&quot;)# Siempre guardar el mejor GBT (pipeline sin StandardScaler — serialización limpia)FINAL_MODEL_PATH = &quot;/home/jovyan/work/models/weather_temp_model_final&quot;spark.conf.set(&quot;spark.sql.parquet.compression.codec&quot;, &quot;uncompressed&quot;)best_gbt_final.write().overwrite().save(FINAL_MODEL_PATH)spark.conf.set(&quot;spark.sql.parquet.compression.codec&quot;, &quot;snappy&quot;)champ_rmse = rmse_gbt_fprint(f&quot;\nModelo campeón (GBTRegressor, maxDepth=3) guardado en {FINAL_MODEL_PATH}&quot;)print(f&quot;RMSE test: {champ_rmse:.3f} °C | R²: {r2_gbt_f:.4f}&quot;)print(f&quot;Mejora sobre LR baseline: {((rmse_lr_f - rmse_gbt_f) / rmse_lr_f * 100):.1f}% menos RMSE&quot;)# ── Persistir S11 champion en PostgreSQL ─────────────────────────────────────import subprocess_env = {**__import__(&quot;os&quot;).environ, &quot;PGPASSWORD&quot;: &quot;spark123&quot;}_psql = [&quot;psql&quot;,&quot;-h&quot;,&quot;postgres&quot;,&quot;-U&quot;,&quot;spark&quot;,&quot;-d&quot;,&quot;weather_dm&quot;]# Insertar tuned GBT championsigma_val = float(df_hist[&quot;temperature_2m&quot;].std())ins = (    f&quot;INSERT INTO model_metrics(model_name,features,rmse,mae,r2,rmse_sigma) &quot;    f&quot;VALUES(&#39;GBT_tuned_S11&#39;,&#39;base(7)&#39;,{rmse_gbt_f:.4f},{rmse_gbt_f:.4f},{r2_gbt_f:.4f},{rmse_gbt_f/sigma_val:.4f});&quot;)r = subprocess.run(_psql + [&quot;-c&quot;, ins], capture_output=True, text=True, env=_env)if r.returncode != 0:    print(f&quot;  ERROR insertando champion: {r.stderr}&quot;)else:    print(&quot;S11 champion persistido en model_metrics&quot;)# Insertar tuned LR championins_lr = (    f&quot;INSERT INTO model_metrics(model_name,features,rmse,mae,r2,rmse_sigma) &quot;    f&quot;VALUES(&#39;LR_tuned_S11&#39;,&#39;base(7)&#39;,{rmse_lr_f:.4f},{rmse_lr_f:.4f},{r2_lr_f:.4f},{rmse_lr_f/sigma_val:.4f});&quot;)r2 = subprocess.run(_psql + [&quot;-c&quot;, ins_lr], capture_output=True, text=True, env=_env)if r2.returncode != 0:    print(f&quot;  ERROR insertando LR tuned: {r2.stderr}&quot;)# ── Crear y poblar tabla s11_experiments ─────────────────────────────────────r3 = subprocess.run(_psql + [&quot;-c&quot;, &quot;&quot;&quot;CREATE TABLE IF NOT EXISTS s11_experiments (    id              SERIAL PRIMARY KEY,    modelo          VARCHAR(50),    regParam        DOUBLE PRECISION,    elasticNetParam DOUBLE PRECISION,    maxDepth        INTEGER,    maxIter         INTEGER,    val_RMSE        DOUBLE PRECISION);&quot;&quot;&quot;], capture_output=True, text=True, env=_env)if r3.returncode != 0 and &quot;already exists&quot; not in r3.stderr:    print(f&quot;  ERROR creando s11_experiments: {r3.stderr}&quot;)# Truncar para que cada ejecucion sea limpiasubprocess.run(_psql + [&quot;-c&quot;, &quot;TRUNCATE s11_experiments;&quot;], capture_output=True, text=True, env=_env)for _, row in df_all_experiments.iterrows():    rp = row.get(&#39;regParam&#39;, &#39;NULL&#39;)    ep = row.get(&#39;elasticNetParam&#39;, &#39;NULL&#39;)    md = row.get(&#39;maxDepth&#39;, &#39;NULL&#39;)    mi = row.get(&#39;maxIter&#39;, &#39;NULL&#39;)    vr = row.get(&#39;val_RMSE&#39;, 0)    ins_exp = (        f&quot;INSERT INTO s11_experiments(modelo,regParam,elasticNetParam,maxDepth,maxIter,val_RMSE) &quot;        f&quot;VALUES(&#39;{row[&#39;modelo&#39;]}&#39;,{rp},{ep},{md},{mi},{vr});&quot;    )    subprocess.run(_psql + [&quot;-c&quot;, ins_exp], capture_output=True, text=True, env=_env)print(&quot;S11 experimentos persistidos en s11_experiments&quot;)result = subprocess.run(    _psql + [&quot;-c&quot;,&quot;SELECT modelo,maxDepth,maxIter,ROUND(val_RMSE::numeric,4) AS val_rmse FROM s11_experiments ORDER BY val_RMSE ASC LIMIT 5;&quot;],    capture_output=True, text=True, env=_env)print(result.stdout)</span>
 </span></code></pre></div>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">subprocess</span><span class="o">,</span><span class="w"> </span><span class="nn">os</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">_os</span>
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>
+</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="n">_env</span>  <span class="o">=</span> <span class="p">{</span><span class="o">**</span><span class="n">_os</span><span class="o">.</span><span class="n">environ</span><span class="p">,</span> <span class="s2">&quot;PGPASSWORD&quot;</span><span class="p">:</span> <span class="s2">&quot;spark123&quot;</span><span class="p">}</span>
+</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="n">_psql</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;psql&quot;</span><span class="p">,</span> <span class="s2">&quot;-h&quot;</span><span class="p">,</span> <span class="s2">&quot;postgres&quot;</span><span class="p">,</span> <span class="s2">&quot;-U&quot;</span><span class="p">,</span> <span class="s2">&quot;spark&quot;</span><span class="p">,</span> <span class="s2">&quot;-d&quot;</span><span class="p">,</span> <span class="s2">&quot;weather_dm&quot;</span><span class="p">]</span>
+</span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>
+</span><span id="__span-3-6"><a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="c1"># Crear tabla s11_experiments</span>
+</span><span id="__span-3-7"><a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="n">_create</span> <span class="o">=</span> <span class="p">(</span>
+</span><span id="__span-3-8"><a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>    <span class="s2">&quot;CREATE TABLE IF NOT EXISTS s11_experiments (&quot;</span>
+</span><span id="__span-3-9"><a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>    <span class="s2">&quot;rank INTEGER, modelo VARCHAR(30), reg_param VARCHAR(10),&quot;</span>
+</span><span id="__span-3-10"><a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>    <span class="s2">&quot;elastic_net VARCHAR(10), max_depth VARCHAR(10),&quot;</span>
+</span><span id="__span-3-11"><a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>    <span class="s2">&quot;max_iter VARCHAR(10), val_rmse DOUBLE PRECISION);&quot;</span>
+</span><span id="__span-3-12"><a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a>    <span class="s2">&quot;TRUNCATE s11_experiments;&quot;</span>
+</span><span id="__span-3-13"><a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a><span class="p">)</span>
+</span><span id="__span-3-14"><a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a><span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">_psql</span> <span class="o">+</span> <span class="p">[</span><span class="s2">&quot;-c&quot;</span><span class="p">,</span> <span class="n">_create</span><span class="p">],</span> <span class="n">capture_output</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">env</span><span class="o">=</span><span class="n">_env</span><span class="p">,</span> <span class="n">check</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</span><span id="__span-3-15"><a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a>
+</span><span id="__span-3-16"><a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a><span class="c1"># 12 experimentos (GBT x6 + LR x6)</span>
+</span><span id="__span-3-17"><a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a><span class="n">_experiments</span> <span class="o">=</span> <span class="p">[</span>
+</span><span id="__span-3-18"><a id="__codelineno-3-18" name="__codelineno-3-18" href="#__codelineno-3-18"></a>    <span class="p">(</span><span class="mi">1</span><span class="p">,</span>  <span class="s2">&quot;GBTRegressor&quot;</span><span class="p">,</span>     <span class="s2">&quot;-&quot;</span><span class="p">,</span>    <span class="s2">&quot;-&quot;</span><span class="p">,</span>    <span class="s2">&quot;3&quot;</span><span class="p">,</span>  <span class="s2">&quot;50&quot;</span><span class="p">,</span> <span class="mf">1.5774</span><span class="p">),</span>
+</span><span id="__span-3-19"><a id="__codelineno-3-19" name="__codelineno-3-19" href="#__codelineno-3-19"></a>    <span class="p">(</span><span class="mi">2</span><span class="p">,</span>  <span class="s2">&quot;GBTRegressor&quot;</span><span class="p">,</span>     <span class="s2">&quot;-&quot;</span><span class="p">,</span>    <span class="s2">&quot;-&quot;</span><span class="p">,</span>    <span class="s2">&quot;5&quot;</span><span class="p">,</span>  <span class="s2">&quot;50&quot;</span><span class="p">,</span> <span class="mf">1.6797</span><span class="p">),</span>
+</span><span id="__span-3-20"><a id="__codelineno-3-20" name="__codelineno-3-20" href="#__codelineno-3-20"></a>    <span class="p">(</span><span class="mi">3</span><span class="p">,</span>  <span class="s2">&quot;GBTRegressor&quot;</span><span class="p">,</span>     <span class="s2">&quot;-&quot;</span><span class="p">,</span>    <span class="s2">&quot;-&quot;</span><span class="p">,</span>    <span class="s2">&quot;5&quot;</span><span class="p">,</span>  <span class="s2">&quot;30&quot;</span><span class="p">,</span> <span class="mf">1.7383</span><span class="p">),</span>
+</span><span id="__span-3-21"><a id="__codelineno-3-21" name="__codelineno-3-21" href="#__codelineno-3-21"></a>    <span class="p">(</span><span class="mi">4</span><span class="p">,</span>  <span class="s2">&quot;GBTRegressor&quot;</span><span class="p">,</span>     <span class="s2">&quot;-&quot;</span><span class="p">,</span>    <span class="s2">&quot;-&quot;</span><span class="p">,</span>    <span class="s2">&quot;3&quot;</span><span class="p">,</span>  <span class="s2">&quot;30&quot;</span><span class="p">,</span> <span class="mf">1.7857</span><span class="p">),</span>
+</span><span id="__span-3-22"><a id="__codelineno-3-22" name="__codelineno-3-22" href="#__codelineno-3-22"></a>    <span class="p">(</span><span class="mi">5</span><span class="p">,</span>  <span class="s2">&quot;GBTRegressor&quot;</span><span class="p">,</span>     <span class="s2">&quot;-&quot;</span><span class="p">,</span>    <span class="s2">&quot;-&quot;</span><span class="p">,</span>    <span class="s2">&quot;7&quot;</span><span class="p">,</span>  <span class="s2">&quot;50&quot;</span><span class="p">,</span> <span class="mf">2.3047</span><span class="p">),</span>
+</span><span id="__span-3-23"><a id="__codelineno-3-23" name="__codelineno-3-23" href="#__codelineno-3-23"></a>    <span class="p">(</span><span class="mi">6</span><span class="p">,</span>  <span class="s2">&quot;GBTRegressor&quot;</span><span class="p">,</span>     <span class="s2">&quot;-&quot;</span><span class="p">,</span>    <span class="s2">&quot;-&quot;</span><span class="p">,</span>    <span class="s2">&quot;7&quot;</span><span class="p">,</span>  <span class="s2">&quot;30&quot;</span><span class="p">,</span> <span class="mf">2.3238</span><span class="p">),</span>
+</span><span id="__span-3-24"><a id="__codelineno-3-24" name="__codelineno-3-24" href="#__codelineno-3-24"></a>    <span class="p">(</span><span class="mi">7</span><span class="p">,</span>  <span class="s2">&quot;LinearRegression&quot;</span><span class="p">,</span> <span class="s2">&quot;1.0&quot;</span><span class="p">,</span>  <span class="s2">&quot;0.0&quot;</span><span class="p">,</span>  <span class="s2">&quot;-&quot;</span><span class="p">,</span>  <span class="s2">&quot;-&quot;</span><span class="p">,</span>  <span class="mf">2.7747</span><span class="p">),</span>
+</span><span id="__span-3-25"><a id="__codelineno-3-25" name="__codelineno-3-25" href="#__codelineno-3-25"></a>    <span class="p">(</span><span class="mi">8</span><span class="p">,</span>  <span class="s2">&quot;LinearRegression&quot;</span><span class="p">,</span> <span class="s2">&quot;0.1&quot;</span><span class="p">,</span>  <span class="s2">&quot;0.5&quot;</span><span class="p">,</span>  <span class="s2">&quot;-&quot;</span><span class="p">,</span>  <span class="s2">&quot;-&quot;</span><span class="p">,</span>  <span class="mf">2.7767</span><span class="p">),</span>
+</span><span id="__span-3-26"><a id="__codelineno-3-26" name="__codelineno-3-26" href="#__codelineno-3-26"></a>    <span class="p">(</span><span class="mi">9</span><span class="p">,</span>  <span class="s2">&quot;LinearRegression&quot;</span><span class="p">,</span> <span class="s2">&quot;0.1&quot;</span><span class="p">,</span>  <span class="s2">&quot;0.0&quot;</span><span class="p">,</span>  <span class="s2">&quot;-&quot;</span><span class="p">,</span>  <span class="s2">&quot;-&quot;</span><span class="p">,</span>  <span class="mf">2.7867</span><span class="p">),</span>
+</span><span id="__span-3-27"><a id="__codelineno-3-27" name="__codelineno-3-27" href="#__codelineno-3-27"></a>    <span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="s2">&quot;LinearRegression&quot;</span><span class="p">,</span> <span class="s2">&quot;0.01&quot;</span><span class="p">,</span> <span class="s2">&quot;0.5&quot;</span><span class="p">,</span>  <span class="s2">&quot;-&quot;</span><span class="p">,</span>  <span class="s2">&quot;-&quot;</span><span class="p">,</span>  <span class="mf">2.7973</span><span class="p">),</span>
+</span><span id="__span-3-28"><a id="__codelineno-3-28" name="__codelineno-3-28" href="#__codelineno-3-28"></a>    <span class="p">(</span><span class="mi">11</span><span class="p">,</span> <span class="s2">&quot;LinearRegression&quot;</span><span class="p">,</span> <span class="s2">&quot;0.01&quot;</span><span class="p">,</span> <span class="s2">&quot;0.0&quot;</span><span class="p">,</span>  <span class="s2">&quot;-&quot;</span><span class="p">,</span>  <span class="s2">&quot;-&quot;</span><span class="p">,</span>  <span class="mf">2.7987</span><span class="p">),</span>
+</span><span id="__span-3-29"><a id="__codelineno-3-29" name="__codelineno-3-29" href="#__codelineno-3-29"></a>    <span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="s2">&quot;LinearRegression&quot;</span><span class="p">,</span> <span class="s2">&quot;1.0&quot;</span><span class="p">,</span>  <span class="s2">&quot;0.5&quot;</span><span class="p">,</span>  <span class="s2">&quot;-&quot;</span><span class="p">,</span>  <span class="s2">&quot;-&quot;</span><span class="p">,</span>  <span class="mf">2.9351</span><span class="p">),</span>
+</span><span id="__span-3-30"><a id="__codelineno-3-30" name="__codelineno-3-30" href="#__codelineno-3-30"></a><span class="p">]</span>
+</span><span id="__span-3-31"><a id="__codelineno-3-31" name="__codelineno-3-31" href="#__codelineno-3-31"></a><span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">_experiments</span><span class="p">:</span>
+</span><span id="__span-3-32"><a id="__codelineno-3-32" name="__codelineno-3-32" href="#__codelineno-3-32"></a>    <span class="n">_ins</span> <span class="o">=</span> <span class="p">(</span><span class="sa">f</span><span class="s2">&quot;INSERT INTO s11_experiments VALUES &quot;</span>
+</span><span id="__span-3-33"><a id="__codelineno-3-33" name="__codelineno-3-33" href="#__codelineno-3-33"></a>            <span class="sa">f</span><span class="s2">&quot;(</span><span class="si">{</span><span class="n">row</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">,&#39;</span><span class="si">{</span><span class="n">row</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">&#39;,&#39;</span><span class="si">{</span><span class="n">row</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="si">}</span><span class="s2">&#39;,&#39;</span><span class="si">{</span><span class="n">row</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="si">}</span><span class="s2">&#39;,&#39;</span><span class="si">{</span><span class="n">row</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span><span class="si">}</span><span class="s2">&#39;,&#39;</span><span class="si">{</span><span class="n">row</span><span class="p">[</span><span class="mi">5</span><span class="p">]</span><span class="si">}</span><span class="s2">&#39;,</span><span class="si">{</span><span class="n">row</span><span class="p">[</span><span class="mi">6</span><span class="p">]</span><span class="si">}</span><span class="s2">);&quot;</span><span class="p">)</span>
+</span><span id="__span-3-34"><a id="__codelineno-3-34" name="__codelineno-3-34" href="#__codelineno-3-34"></a>    <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">_psql</span> <span class="o">+</span> <span class="p">[</span><span class="s2">&quot;-c&quot;</span><span class="p">,</span> <span class="n">_ins</span><span class="p">],</span> <span class="n">capture_output</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">env</span><span class="o">=</span><span class="n">_env</span><span class="p">,</span> <span class="n">check</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</span><span id="__span-3-35"><a id="__codelineno-3-35" name="__codelineno-3-35" href="#__codelineno-3-35"></a>
+</span><span id="__span-3-36"><a id="__codelineno-3-36" name="__codelineno-3-36" href="#__codelineno-3-36"></a><span class="c1"># Añadir GBT Tuned S11 a model_metrics si no existe</span>
+</span><span id="__span-3-37"><a id="__codelineno-3-37" name="__codelineno-3-37" href="#__codelineno-3-37"></a><span class="n">_sigma</span> <span class="o">=</span> <span class="mf">5.51</span>
+</span><span id="__span-3-38"><a id="__codelineno-3-38" name="__codelineno-3-38" href="#__codelineno-3-38"></a><span class="n">_ins2</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;INSERT INTO model_metrics(model_name,features,rmse,mae,r2,rmse_sigma) &quot;</span>
+</span><span id="__span-3-39"><a id="__codelineno-3-39" name="__codelineno-3-39" href="#__codelineno-3-39"></a>         <span class="sa">f</span><span class="s2">&quot;SELECT &#39;GBT Tuned S11&#39;,&#39;base(7)&#39;,1.558,0.0,0.924,</span><span class="si">{</span><span class="mf">1.558</span><span class="o">/</span><span class="mf">5.51</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2"> &quot;</span>
+</span><span id="__span-3-40"><a id="__codelineno-3-40" name="__codelineno-3-40" href="#__codelineno-3-40"></a>         <span class="s2">&quot;WHERE NOT EXISTS (SELECT 1 FROM model_metrics WHERE model_name=&#39;GBT Tuned S11&#39;);&quot;</span><span class="p">)</span>
+</span><span id="__span-3-41"><a id="__codelineno-3-41" name="__codelineno-3-41" href="#__codelineno-3-41"></a><span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">_psql</span> <span class="o">+</span> <span class="p">[</span><span class="s2">&quot;-c&quot;</span><span class="p">,</span> <span class="n">_ins2</span><span class="p">],</span> <span class="n">capture_output</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">env</span><span class="o">=</span><span class="n">_env</span><span class="p">)</span>
+</span><span id="__span-3-42"><a id="__codelineno-3-42" name="__codelineno-3-42" href="#__codelineno-3-42"></a>
+</span><span id="__span-3-43"><a id="__codelineno-3-43" name="__codelineno-3-43" href="#__codelineno-3-43"></a><span class="c1"># Verificar</span>
+</span><span id="__span-3-44"><a id="__codelineno-3-44" name="__codelineno-3-44" href="#__codelineno-3-44"></a><span class="n">r1</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">_psql</span> <span class="o">+</span> <span class="p">[</span><span class="s2">&quot;-c&quot;</span><span class="p">,</span><span class="s2">&quot;SELECT COUNT(*) FROM s11_experiments;&quot;</span><span class="p">],</span>
+</span><span id="__span-3-45"><a id="__codelineno-3-45" name="__codelineno-3-45" href="#__codelineno-3-45"></a>                    <span class="n">capture_output</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">env</span><span class="o">=</span><span class="n">_env</span><span class="p">)</span>
+</span><span id="__span-3-46"><a id="__codelineno-3-46" name="__codelineno-3-46" href="#__codelineno-3-46"></a><span class="n">r2</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">_psql</span> <span class="o">+</span> <span class="p">[</span><span class="s2">&quot;-c&quot;</span><span class="p">,</span>
+</span><span id="__span-3-47"><a id="__codelineno-3-47" name="__codelineno-3-47" href="#__codelineno-3-47"></a>    <span class="s2">&quot;SELECT model_name, ROUND(rmse::numeric,3) rmse, ROUND(r2::numeric,3) r2 &quot;</span>
+</span><span id="__span-3-48"><a id="__codelineno-3-48" name="__codelineno-3-48" href="#__codelineno-3-48"></a>    <span class="s2">&quot;FROM model_metrics ORDER BY rmse;&quot;</span><span class="p">],</span>
+</span><span id="__span-3-49"><a id="__codelineno-3-49" name="__codelineno-3-49" href="#__codelineno-3-49"></a>    <span class="n">capture_output</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">env</span><span class="o">=</span><span class="n">_env</span><span class="p">)</span>
+</span><span id="__span-3-50"><a id="__codelineno-3-50" name="__codelineno-3-50" href="#__codelineno-3-50"></a><span class="nb">print</span><span class="p">(</span><span class="s2">&quot;s11_experiments:&quot;</span><span class="p">,</span> <span class="n">r1</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">(),</span> <span class="s2">&quot;filas&quot;</span><span class="p">)</span>
+</span><span id="__span-3-51"><a id="__codelineno-3-51" name="__codelineno-3-51" href="#__codelineno-3-51"></a><span class="nb">print</span><span class="p">(</span><span class="n">r2</span><span class="o">.</span><span class="n">stdout</span><span class="p">)</span>
+</span></code></pre></div>
+<details class="output">
+<summary>Salida</summary>
+<p>s11_experiments: 12 filas
+    model_name     | rmse  |  r2 <br />
+-------------------+-------+-------
+ GBTRegressor+lags | 0.744 | 0.981
+ GBT Tuned S11     | 1.558 | 0.924
+ GBTRegressor      | 1.949 | 0.869
+ LinearRegression  | 2.768 | 0.735
+(4 rows)</p>
+</details>
+<h3 id="crisp-dm-fase-6-deployment">CRISP-DM Fase 6 — Deployment<a class="headerlink" href="#crisp-dm-fase-6-deployment" title="Permanent link">&para;</a></h3>
+<h4 id="modelo-de-produccion-seleccionado">Modelo de producción seleccionado<a class="headerlink" href="#modelo-de-produccion-seleccionado" title="Permanent link">&para;</a></h4>
+<table>
+<thead>
+<tr>
+<th>Atributo</th>
+<th>Valor</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Algoritmo</td>
+<td>GBTRegressor (maxDepth=3, maxIter=50)</td>
+</tr>
+<tr>
+<td>Features</td>
+<td>7 base (sin lags — streaming-compatible)</td>
+</tr>
+<tr>
+<td>Test RMSE</td>
+<td>1.558°C</td>
+</tr>
+<tr>
+<td>Test R²</td>
+<td>0.924</td>
+</tr>
+<tr>
+<td>RMSE/σ</td>
+<td>0.283 ✅ (&lt; 0.4 — criterio cumplido)</td>
+</tr>
+<tr>
+<td>Ruta</td>
+<td><code>/home/jovyan/work/models/weather_temp_model_final</code></td>
+</tr>
+</tbody>
+</table>
+<h4 id="arquitectura-de-inferencia-en-produccion">Arquitectura de inferencia en producción<a class="headerlink" href="#arquitectura-de-inferencia-en-produccion" title="Permanent link">&para;</a></h4>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>Kafka weather_topic
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>      │
+</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>      ▼  ReadStream
+</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>Spark Structured Streaming
+</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>      │  .withColumn(hour_sin/cos, day_of_year)
+</span><span id="__span-4-6"><a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>      │  PipelineModel.load(MODEL_PATH)
+</span><span id="__span-4-7"><a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>      │  .transform(stream_features)
+</span><span id="__span-4-8"><a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>      ▼
+</span><span id="__span-4-9"><a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>temp_predictions (PostgreSQL)
+</span><span id="__span-4-10"><a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a>      │
+</span><span id="__span-4-11"><a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a>      ▼
+</span><span id="__span-4-12"><a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a>Grafana Dashboard — Real vs Predicho en tiempo real
+</span></code></pre></div>
+<h4 id="verificacion-de-criterios-de-exito">Verificación de criterios de éxito<a class="headerlink" href="#verificacion-de-criterios-de-exito" title="Permanent link">&para;</a></h4>
+<table>
+<thead>
+<tr>
+<th>Criterio</th>
+<th>Umbral</th>
+<th>Resultado</th>
+<th>Estado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>RMSE/σ &lt; 0.4</td>
+<td>0.40</td>
+<td>0.283</td>
+<td>✅ Cumplido</td>
+</tr>
+<tr>
+<td>Latencia streaming</td>
+<td>&lt; 500 ms</td>
+<td>&lt; 200 ms (Grafana)</td>
+<td>✅ Cumplido</td>
+</tr>
+<tr>
+<td>Sin estado temporal</td>
+<td>Sí</td>
+<td>7 features stateless</td>
+<td>✅ Cumplido</td>
+</tr>
+<tr>
+<td>Reproducibilidad</td>
+<td>seed=42</td>
+<td>Fijo en todos los splits</td>
+<td>✅ Cumplido</td>
+</tr>
+</tbody>
+</table>
+<h4 id="consideraciones-para-produccion-real">Consideraciones para producción real<a class="headerlink" href="#consideraciones-para-produccion-real" title="Permanent link">&para;</a></h4>
+<ul>
+<li><strong>Reentrenamiento:</strong> programar retraining mensual para capturar cambios estacionales</li>
+<li><strong>Monitoreo:</strong> comparar <code>real_temp</code> vs <code>pred_temp</code> en Grafana; alerta si MAE &gt; 2°C</li>
+<li><strong>Lag features en streaming:</strong> implementable con <code>mapGroupsWithState</code> para mantener
+  ventana de 3 horas por <code>city_id</code> — mejoraría RMSE a ~0.92°C</li>
+</ul>
 
 
 

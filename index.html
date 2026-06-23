@@ -444,6 +444,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#forecasting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Forecasting
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#stack-tecnologico" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -835,6 +846,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#forecasting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Forecasting
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#stack-tecnologico" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -863,17 +885,17 @@
 
 
 <h1 id="big-data-pipeline-unidad-2">Big Data Pipeline — Unidad 2<a class="headerlink" href="#big-data-pipeline-unidad-2" title="Permanent link">&para;</a></h1>
-<p>Pipeline de ingesta, procesamiento en streaming y ML distribuido sobre datos meteorológicos reales.</p>
+<p>Pipeline de ingesta, procesamiento en streaming, ML distribuido y forecasting meteorológico.
+Metodología <strong>CRISP-DM</strong> aplicada end-to-end sobre datos reales de Open-Meteo.</p>
 <hr />
 <h2 id="flujo-general">Flujo general<a class="headerlink" href="#flujo-general" title="Permanent link">&para;</a></h2>
 <pre class="mermaid"><code>flowchart LR
     A["🌤️ Open-Meteo API\ncada 10 s"] --&gt;|JSON| B["📨 Kafka\nweather_topic\nKRaft mode"]
     B --&gt;|ReadStream| C["⚡ Spark\nStructured Streaming\nwatermark 10 min"]
-    C --&gt;|foreachBatch| D[("🐘 PostgreSQL\nweather_windows")]
-    C --&gt;|writeStream| E["📦 Parquet\nwarehouse"]
-    D --&gt; F["📊 Grafana\n+ Prometheus"]
-    D --&gt;|datos históricos| G["🤖 MLlib\nS9 · S10 · S11"]
-    G --&gt;|GBT model| H["🔮 Inferencia\nStreaming"]
+    C --&gt;|foreachBatch| D[("🐘 PostgreSQL\n5 tablas")]
+    D --&gt; F["📊 Grafana\n3 dashboards"]
+    D --&gt;|datos históricos| G["🤖 MLlib CRISP-DM\nS9 · S10 · S11"]
+    G --&gt;|GBT model| H["🔮 Inferencia\nStreaming +\nForecast +1h/+24h"]
     H --&gt; D
 
     style A fill:#0ea5e9,color:#fff
@@ -908,27 +930,27 @@
 </tr>
 <tr>
 <td>S8</td>
-<td>Observabilidad — métricas, alertas, costos</td>
+<td>Observabilidad — métricas, alertas</td>
 <td>Prometheus · Grafana</td>
-<td>2 dashboards operativos</td>
+<td>3 dashboards operativos</td>
 </tr>
 <tr>
 <td>S9</td>
-<td>ML distribuido — regresión con MLlib</td>
-<td>VectorAssembler · GBT</td>
+<td>ML distribuido — CRISP-DM con MLlib</td>
+<td>VectorAssembler · GBT · EDA</td>
 <td>R² = 0.974 con lag features</td>
 </tr>
 <tr>
 <td>S10</td>
-<td>Series de tiempo + inferencia streaming</td>
-<td>PipelineModel.load</td>
-<td>MAE stream ≈ 0.33°C</td>
+<td>Series de tiempo, inferencia y forecasting</td>
+<td>PipelineModel · Open-Meteo hourly</td>
+<td>+1h ±0.92°C · +24h vía API</td>
 </tr>
 <tr>
 <td>S11</td>
 <td>Tuning distribuido — TrainValidationSplit</td>
-<td>ParamGridBuilder</td>
-<td>12 experimentos, GBT campeón</td>
+<td>ParamGridBuilder · PostgreSQL</td>
+<td>12 experimentos, GBT campeón RMSE=1.56°C</td>
 </tr>
 </tbody>
 </table>
@@ -986,9 +1008,37 @@
 </tbody>
 </table>
 <div class="admonition success">
-<p class="admonition-title">Modelo campeón de producción</p>
-<p><strong>GBT base</strong> (7 features, sin lags) se usa en <strong>streaming</strong> — compatible con datos en tiempo real sin estado.
-<strong>GBT + lags</strong> es el mejor modelo batch con RMSE/σ = 0.17 (37.7% mejor que GBT base).</p>
+<p class="admonition-title">Criterio de éxito CRISP-DM: RMSE/σ &lt; 0.4</p>
+<p><strong>GBT Tuned S11</strong>: RMSE/σ = 0.283 ✅ — cumple el criterio de negocio.
+<strong>GBT base</strong>: RMSE/σ = 0.269 ✅ — modelo de producción en streaming.
+<strong>GBT + lags</strong>: RMSE/σ = 0.167 ✅ — mejor modelo batch (forecasting +1h).</p>
+</div>
+<hr />
+<h2 id="forecasting">Forecasting<a class="headerlink" href="#forecasting" title="Permanent link">&para;</a></h2>
+<div class="admonition tip">
+<p class="admonition-title">Predicción de temperatura</p>
+<table>
+<thead>
+<tr>
+<th>Horizonte</th>
+<th>Método</th>
+<th>Precisión esperada</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>+1 hora</strong></td>
+<td>GBT+lags · lag-shift (temp actual → lag1)</td>
+<td>±0.92°C</td>
+</tr>
+<tr>
+<td><strong>+24 horas</strong></td>
+<td>GBT base · Open-Meteo /v1/forecast hourly</td>
+<td>referencia API + corrección modelo</td>
+</tr>
+</tbody>
+</table>
+<p>Los resultados se persisten en <code>weather_forecast</code> y se visualizan en el dashboard <strong>Forecasting</strong> de Grafana.</p>
 </div>
 <hr />
 <h2 id="stack-tecnologico">Stack tecnológico<a class="headerlink" href="#stack-tecnologico" title="Permanent link">&para;</a></h2>
@@ -1005,28 +1055,29 @@
 <ul>
 <li><strong>Apache Spark 3.5</strong> Structured Streaming</li>
 <li>Watermark 10 min + ventanas tumbling 5 min</li>
-<li>Sinks: PostgreSQL · Parquet · Memory</li>
+<li>Sinks: PostgreSQL (5 tablas) · Memory</li>
 </ul>
 </div>
 <div class="tabbed-block">
 <ul>
+<li><strong>CRISP-DM</strong> — metodología completa (6 fases) en S9–S11</li>
 <li><strong>MLlib</strong> — LinearRegression, GBTRegressor, Pipeline</li>
-<li><strong>TrainValidationSplit</strong> — grid search distribuido</li>
+<li><strong>TrainValidationSplit</strong> — grid search distribuido (12 experimentos)</li>
 <li>Features: cyclic hour encoding, day_of_year, lag features</li>
+<li><strong>Forecasting</strong> — +1h lag-shift · +24h Open-Meteo hourly API</li>
 </ul>
 </div>
 <div class="tabbed-block">
 <ul>
 <li><strong>Prometheus</strong> — scrape métricas Spark cada 15 s</li>
-<li><strong>Grafana</strong> — dashboard infra + dashboard ML results</li>
-<li><strong>Apache Superset</strong> — BI analítico sobre PostgreSQL</li>
+<li><strong>Grafana</strong> — 3 dashboards: Weather Pipeline · Métricas ML · Forecasting</li>
+<li>PostgreSQL como datasource SQL (grafana-postgresql-datasource)</li>
 </ul>
 </div>
 <div class="tabbed-block">
 <ul>
-<li>Docker Compose — 5 servicios (Kafka, Spark, PG, Grafana, Superset)</li>
-<li>Jupyter PySpark notebook integrado</li>
-<li>GitHub Actions → MkDocs → GitHub Pages</li>
+<li>Docker Compose — 6 servicios (Kafka, Spark, PG, Prometheus, Grafana, Jupyter)</li>
+<li>GitHub Actions → MkDocs Material → GitHub Pages</li>
 </ul>
 </div>
 </div>

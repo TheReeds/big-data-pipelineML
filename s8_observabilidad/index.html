@@ -1384,13 +1384,12 @@
 <h1 id="s8-observabilidad">S8 — Observabilidad<a class="headerlink" href="#s8-observabilidad" title="Permanent link">&para;</a></h1>
 <div class="admonition abstract">
 <p class="admonition-title">Objetivo S8</p>
-<p>Exponer métricas del pipeline vía Prometheus, visualizarlas en Grafana
+<p>Exportar métricas del pipeline a Prometheus, visualizarlas en Grafana
 y estimar costos de operación en producción.</p>
 </div>
 <pre class="mermaid"><code>flowchart LR
     SPARK["Spark
-Streaming Query"] --&gt;|"recentProgress
-cada batch"| EXP["Prometheus
+Streaming Query"] --&gt;|"recentProgress"| EXP["Prometheus
 Exporter :8001"]
     EXP --&gt;|"scrape 15 s"| PROM["Prometheus
 :9090"]
@@ -1398,23 +1397,16 @@ Exporter :8001"]
 :3000"]
     PG[("PostgreSQL")] --&gt;|"SQL datasource"| GRAF
 
-    subgraph metricas["Métricas expuestas"]
-        M1["spark_throughput_rows_per_sec"]
-        M2["spark_latency_trigger_ms"]
-        M3["spark_state_rows"]
-        M4["spark_watermark_lag_s"]
+    subgraph metricas["5 métricas expuestas"]
+        M1["throughput_rows_per_sec"]
+        M2["latency_trigger_ms"]
+        M3["state_rows"]
+        M4["watermark_lag_s"]
+        M5["input_rows_total"]
     end
-
     EXP --&gt; metricas
-
     style PROM fill:#e65100,color:#fff
     style GRAF fill:#f57c00,color:#fff</code></pre>
-<div class="admonition warning">
-<p class="admonition-title">Nota sobre tmpfs</p>
-<p>El docker-compose monta <code>/tmp</code> como <code>tmpfs</code> sin permisos de ejecución.
-Esto impide que Snappy cargue su librería nativa (<code>.so</code>).
-<strong>Solución:</strong> usar <code>spark.sql.parquet.compression.codec = uncompressed</code> al guardar modelos.</p>
-</div>
 <hr />
 <div class="language-python highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">collect_metrics</span><span class="p">(</span><span class="n">exp_name</span><span class="p">,</span> <span class="n">progress_list</span><span class="p">):</span>
 </span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Extrae metricas estructuradas de recentProgress.&quot;&quot;&quot;</span>

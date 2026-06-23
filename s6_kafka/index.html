@@ -906,21 +906,20 @@
 <h1 id="s6-apache-kafka">S6 — Apache Kafka<a class="headerlink" href="#s6-apache-kafka" title="Permanent link">&para;</a></h1>
 <div class="admonition abstract">
 <p class="admonition-title">Objetivo S6</p>
-<p>Implementar un pipeline Kafka completo: tópico, contrato de evento, producer en background
-y consumer de verificación. Se usa <strong>KRaft mode</strong> (sin ZooKeeper) con un solo broker.</p>
+<p>Implementar la capa de ingesta con Apache Kafka en modo KRaft (sin ZooKeeper):
+creación del tópico, contrato de evento JSON, producer en background y consumer de verificación.</p>
 </div>
 <pre class="mermaid"><code>flowchart LR
     A["🌤️ Open-Meteo API"] --&gt;|"GET cada 10 s"| B["kafka-python
 Producer Thread"]
     B --&gt;|"JSON event"| C["Kafka
 weather_topic
-1 partición"]
+1 partición · KRaft"]
     C --&gt;|"KafkaConsumer
-verificación"| D["Consumer
-(S6 verify)"]
+verificación S6"| D["Consumer
+(últimos 5 msg)"]
     C --&gt;|"ReadStream"| E["Spark Streaming
 (S7 →)"]
-
     style C fill:#f59e0b,color:#fff</code></pre>
 <hr />
 <h2 id="2-kafka-topic-y-contrato-de-evento-s6">2. Kafka — Topic y Contrato de Evento (S6)<a class="headerlink" href="#2-kafka-topic-y-contrato-de-evento-s6" title="Permanent link">&para;</a></h2>

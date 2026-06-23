@@ -884,8 +884,8 @@
 <h1 id="s7-structured-streaming">S7 — Structured Streaming<a class="headerlink" href="#s7-structured-streaming" title="Permanent link">&para;</a></h1>
 <div class="admonition abstract">
 <p class="admonition-title">Objetivo S7</p>
-<p>Procesar el stream de Kafka con Spark Structured Streaming aplicando watermark
-y ventanas de tiempo. Comparar triggers y medir latencia/throughput.</p>
+<p>Procesar el stream de Kafka con watermark y ventanas tumbling.
+Comparar triggers y medir latencia/throughput en 3 experimentos.</p>
 </div>
 <pre class="mermaid"><code>flowchart LR
     K["Kafka
@@ -894,11 +894,11 @@ Schema tipado"]
     P --&gt;|"withWatermark
 10 min"| W["window
 5 min tumbling"]
-    W --&gt;|"avg/min/max"| AGG["Agregaciones"]
-    AGG --&gt;|"foreachBatch"| PG[("PostgreSQL
+    W --&gt; AGG["avg/min/max
+humedad · viento"]
+    AGG --&gt;|"foreachBatch JDBC"| PG[("PostgreSQL
 weather_windows")]
     AGG --&gt;|"memory sink"| MEM["spark.sql()"]
-
     style W fill:#8b5cf6,color:#fff
     style PG fill:#10b981,color:#fff</code></pre>
 <div class="admonition info">
@@ -925,7 +925,7 @@ weather_windows")]
 <tr>
 <td>Trigger</td>
 <td>10 s</td>
-<td>Latencia baja sin overhead excesivo</td>
+<td>Latencia baja sin overhead</td>
 </tr>
 <tr>
 <td>Output mode</td>
